@@ -11,6 +11,8 @@ These endpoints are somewhat implemented:
 - `/api/v1/channels/{ucid}`
 - `/api/v1/channels/{ucid}/{part}`
 - `/api/v1/channels/{part}/{ucid}`
+- `/api/v1/search?q={search}`
+- `/vi/{id}/{file}`
 
 ## The future
 
