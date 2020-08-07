@@ -138,6 +138,7 @@ class Second(object):
 
 			# Now try to get more stuff by manually examining the saved file
 			# Figure out what the name of the saved file was
+			recommendations = []
 			possible_files = [f for f in os.listdir() if f.startswith("{}_".format(info["id"]))]
 			try:
 				if len(possible_files) == 1:
@@ -163,31 +164,46 @@ class Second(object):
 									return None
 
 								def get_view_count(r):
-									text = r["viewCountText"]["simpleText"]
-									if text == "Recommended for you":
-										return 0 # subject to change?
+									if "runs" in r["viewCountText"]: # has live viewers
+										return int(r["viewCountText"]["runs"][0]["text"])
 									else:
-										return int(text.replace(",", "").split(" ")[0])
+										text = r["viewCountText"]["simpleText"]
+										if text == "Recommended for you":
+											return 0 # subject to change?
+										else:
+											return int(text.replace(",", "").split(" ")[0])
 
 								def get_view_count_text(r):
-									text = r["viewCountText"]["simpleText"]
-									if text == "Recommended for you":
-										return "Recommended for you" # subject to change?
-									else:
-										return text
+									if "runs" in r["viewCountText"]: # has live viewers
+										text = "".join([x["text"] for x in r["viewCountText"]["runs"]])
+									else: # has past views
+										text = r["viewCountText"]["simpleText"]
+										if text == "Recommended for you":
+											return "Recommended for you" # subject to change?
+										else:
+											return text
 
-								# result["recommendedVideos"] = recommendations
-								# return result
+								def get_length(r):
+									if "lengthText" in r:
+										return length_text_to_seconds(r["lengthText"]["simpleText"])
+									else:
+										return -1
+
+								def get_length_text(r):
+									if "lengthText" in r:
+										return r["lengthText"]["simpleText"]
+									else:
+										return "Live now"
 
 								result["recommendedVideos"] = list({
 									"videoId": r["videoId"],
 									"title": r["title"]["simpleText"],
 									"videoThumbnails": [],
 									"author": r["longBylineText"]["runs"][0]["text"],
-									"authorUrl": r["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["canonicalBaseUrl"],
+									"authorUrl": r["longBylineText"]["runs"][0]["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"],
 									"authorId": r["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"],
-									"lengthSeconds": length_text_to_seconds(r["lengthText"]["simpleText"]),
-									"second__lengthText": r["lengthText"]["simpleText"],
+									"lengthSeconds": get_length(r),
+									"second__lengthText": get_length_text(r),
 									"viewCountText": get_view_count_text(r),
 									"viewCount": get_view_count(r)
 								} for r in [get_useful_recommendation_data(r) for r in recommendations if get_useful_recommendation_data(r)])
@@ -199,6 +215,7 @@ class Second(object):
 				for file in possible_files:
 					os.unlink(file)
 
+				# return recommendations
 				return result
 
 		except youtube_dl.DownloadError:
