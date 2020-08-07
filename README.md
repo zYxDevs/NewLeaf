@@ -14,7 +14,6 @@ These endpoints are somewhat implemented:
 
 ## The future
 
-- Video recommendations
 - RSS as a source for channel listings
 - Searches
 - Dash manifests
