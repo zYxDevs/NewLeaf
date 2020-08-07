@@ -25,11 +25,15 @@ def length_text_to_seconds(text):
 
 class Second(object):
 	def _cp_dispatch(self, vpath):
-		if vpath[:2] == ["api", "v1"] and len(vpath) >= 4:
-			endpoints = ["channels", "videos"]
+		if vpath[:2] == ["api", "v1"]:
+			endpoints = [
+				["channels", 1, 2],
+				["videos", 1, 1],
+				["search", 0, 0]
+			]
 			for e in endpoints:
-				if vpath[2] == e:
-					vpath[:3] = [e]
+				if vpath[2] == e[0] and len(vpath) >= e[1]+3 and len(vpath) <= e[2]+3:
+					vpath[:3] = [e[0]]
 					return self
 
 		return vpath
@@ -265,6 +269,30 @@ class Second(object):
 				"error": "This channel does not exist.",
 				"identifier": "CHANNEL_DOES_NOT_EXIST"
 			}
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def search(self, *, q, sort_by):
+		info = ytdl.extract_info("ytsearchall:{}".format(q), download=False)
+		return list({
+			"type": "video",
+			"title": video["title"],
+			"videoId": video["id"],
+			"author": None,
+			"authorId": None,
+			"authorUrl": None,
+			"videoThumbnails": [],
+			"description": None,
+			"descriptionHtml": None,
+			"viewCount": None,
+			"published": None,
+			"publishedText": None,
+			"lengthSeconds": None,
+			"liveNow": None,
+			"paid": None,
+			"premium": None,
+			"isUpcoming": None
+		} for video in info["entries"] if "title" in video)
 
 cherrypy.config.update({"server.socket_port": 3000})
 cherrypy.quickstart(Second())
