@@ -185,4 +185,5 @@ class HelloWorld(object):
 				"identifier": "CHANNEL_DOES_NOT_EXIST"
 			}
 
+cherrypy.config.update({"server.socket_port": 3000})
 cherrypy.quickstart(HelloWorld())
