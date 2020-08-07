@@ -6,6 +6,7 @@ import os
 import re
 import json
 import traceback
+import requests
 
 ytdl_opts = {
 	"quiet": True,
@@ -293,6 +294,13 @@ class Second(object):
 			"premium": None,
 			"isUpcoming": None
 		} for video in info["entries"] if "title" in video)
+
+	@cherrypy.expose
+	def vi(self, id, file):
+		with requests.get("https://i.ytimg.com/vi/{}/{}".format(id, file)) as r:
+			r.raise_for_status()
+			cherrypy.response.headers["content-type"] = r.headers["content-type"]
+			return r # no idea if this is a good way to do it, but it definitely works! :D
 
 cherrypy.config.update({"server.socket_port": 3000})
 cherrypy.quickstart(Second())
