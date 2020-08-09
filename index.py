@@ -275,6 +275,8 @@ class Second(object):
 		adaptation_sets_dict = {}
 		for f in video["adaptiveFormats"]:
 			mime = f["second__mime"]
+			if mime == "audio/m4a":
+				mime = "audio/mp4"
 			if not mime in adaptation_sets_dict:
 				adaptation_sets_dict[mime] = []
 			ads = adaptation_sets_dict[mime]
