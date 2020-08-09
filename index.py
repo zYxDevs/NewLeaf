@@ -116,7 +116,8 @@ class Second(object):
 				"isListed": None,
 				"liveNow": None,
 				"isUpcoming": None,
-				"dashUrl": None,
+				"dashUrl": "/api/manifest/dash/id/{}".format(info["id"]),
+				"second__providedDashUrl": None,
 				"adaptiveFormats": list({
 					"index": None,
 					"bitrate": str(int(format["tbr"]*1000)),
@@ -159,7 +160,8 @@ class Second(object):
 			# Now try to get more stuff by manually examining the saved file
 			# Figure out what the name of the saved file was
 			recommendations = []
-			possible_files = [f for f in os.listdir() if f.startswith("{}_".format(info["id"]))]
+			created_files = [f for f in os.listdir() if f.startswith("{}_".format(info["id"]))]
+			possible_files = [f for f in created_files if f.startswith("{}_https_-_www.youtube.com".format(info["id"]))]
 			try:
 				if len(possible_files) == 1:
 					filename = possible_files[0]
@@ -233,13 +235,18 @@ class Second(object):
 							if m_yt_player_config:
 								yt_player_config = json.loads(m_yt_player_config.group(1))
 								player_response = json.loads(yt_player_config["args"]["player_response"])
+								if "dashManifestUrl" in player_response["streamingData"]:
+									result["second__providedDashUrl"] = player_response["streamingData"]["dashManifestUrl"]
+								# result = player_response
+								# return result
 								itagDict = {}
 								for f in player_response["streamingData"]["adaptiveFormats"]:
-									itagDict[str(f["itag"])] = {
-										"initRange": f["initRange"],
-										"indexRange": f["indexRange"],
-										"audioChannels": f["audioChannels"] if "audioChannels" in f else None
-									}
+									if "indexRange" in f:
+										itagDict[str(f["itag"])] = {
+											"initRange": f["initRange"],
+											"indexRange": f["indexRange"],
+											"audioChannels": f["audioChannels"] if "audioChannels" in f else None
+										}
 								for f in result["adaptiveFormats"]:
 									if f["itag"] in itagDict:
 										i = itagDict[f["itag"]]
@@ -248,10 +255,11 @@ class Second(object):
 										f["second__audioChannels"] = i["audioChannels"]
 
 			except Exception:
+				print("messed up extracting recommendations.")
 				traceback.print_exc()
 
 			finally:
-				for file in possible_files:
+				for file in created_files:
 					os.unlink(file)
 
 				self.video_cache[id] = result
@@ -271,6 +279,12 @@ class Second(object):
 
 		if "error" in video:
 			return video
+
+		if video["second__providedDashUrl"]:
+			with requests.get(video["second__providedDashUrl"]) as r:
+				r.raise_for_status()
+				cherrypy.response.headers["content-type"] = r.headers["content-type"]
+				return r
 
 		adaptation_sets_dict = {}
 		for f in video["adaptiveFormats"]:
