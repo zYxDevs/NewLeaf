@@ -7,6 +7,8 @@ import re
 import json
 import traceback
 import requests
+import xml.etree.ElementTree as ET
+from cachetools import TTLCache
 
 ytdl_opts = {
 	"quiet": True,
@@ -25,7 +27,14 @@ def length_text_to_seconds(text):
 	return sum([int(x) * 60**(len(s)-i-1) for i, x in enumerate(s)])
 
 class Second(object):
+	def __init__(self):
+		self.video_cache = TTLCache(maxsize=50, ttl=300)
+
 	def _cp_dispatch(self, vpath):
+		if vpath[:4] == ["api", "manifest", "dash", "id"]:
+			vpath[:4] = ["manifest"]
+			return self
+
 		if vpath[:2] == ["api", "v1"]:
 			endpoints = [
 				["channels", 1, 2],
@@ -42,37 +51,45 @@ class Second(object):
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
 	def videos(self, id):
+		if id in self.video_cache:
+			return self.video_cache[id]
+
 		try:
 			info = ytdl_save.extract_info(id, download=False)
 
 			year = int(info["upload_date"][:4])
 			month = int(info["upload_date"][4:6])
 			day = int(info["upload_date"][6:8])
+			published = int(datetime.datetime(year, month, day).timestamp())
 
 			# Adaptive formats have either audio or video, format streams have both
 			def format_is_adaptive(format):
 				return format["acodec"] == "none" or format["vcodec"] == "none"
 
-			# just the "type" field
-			def format_type(format):
-				sense = "audio"
+			def format_mime(format):
+				sense = "video" if format["vcodec"] != "none" else "audio"
+				return "{}/{}".format(sense, format["ext"])
+
+			def format_codecs(format):
 				codecs = []
 				if format["vcodec"] != "none":
-					sense = "video"
 					codecs.append(format["vcodec"])
 				if format["acodec"] != "none":
 					codecs.append(format["acodec"])
-				return '{}/{}; codecs="{}"'.format(sense, format["ext"], ", ".join(codecs))
+				return codecs
+
+			def format_type(format):
+				return '{}; codecs="{}"'.format(format_mime(format), ", ".join(format_codecs(format)))
 
 			result = {
 				"type": "video",
 				"title": info["title"],
 				"videoId": info["id"],
-				"videoThumbnails": None,
+				"videoThumbnails": [],
 				"storyboards": None,
 				"description": info["description"],
 				"descriptionHtml": None,
-				"published": int(datetime.datetime(year, month, day).timestamp()),
+				"published": published,
 				"publishedText": None,
 				"keywords": None,
 				"viewCount": info["view_count"],
@@ -107,6 +124,8 @@ class Second(object):
 					"url": format["url"],
 					"itag": format["format_id"],
 					"type": format_type(format),
+					"second__mime": format_mime(format),
+					"second__codecs": format_codecs(format),
 					"clen": str(format["filesize"]),
 					"lmt": None,
 					"projectionType": None,
@@ -122,6 +141,7 @@ class Second(object):
 					"url": format["url"],
 					"itag": format["format_id"],
 					"type": format_type(format),
+					"second__mime": format_mime(format),
 					"quality": None,
 					"fps": format["fps"],
 					"container": format["ext"],
@@ -144,11 +164,12 @@ class Second(object):
 				if len(possible_files) == 1:
 					filename = possible_files[0]
 					with open(filename) as file:
-						r = re.compile(r"""^\s*window\["ytInitialData"\] = (\{.*\});\n?$""")
+						r_yt_intial_data = re.compile(r"""^\s*window\["ytInitialData"\] = (\{.*\});\n?$""")
+						r_yt_player_config = re.compile(r"""^\s*[^"]+"cfg"[^"]+ytplayer\.config = (\{.*\});ytplayer\.web_player_context_config = {".""")
 						for line in file:
-							match_result = re.search(r, line)
-							if match_result:
-								yt_initial_data = json.loads(match_result.group(1))
+							m_yt_initial_data = re.search(r_yt_intial_data, line)
+							if m_yt_initial_data:
+								yt_initial_data = json.loads(m_yt_initial_data.group(1))
 								views = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][0]\
 									["videoPrimaryInfoRenderer"]["viewCount"]["videoViewCountRenderer"]
 								result["second__viewCountText"] = views["viewCount"]["simpleText"]
@@ -208,6 +229,24 @@ class Second(object):
 									"viewCount": get_view_count(r)
 								} for r in [get_useful_recommendation_data(r) for r in recommendations if get_useful_recommendation_data(r)])
 
+							m_yt_player_config = re.search(r_yt_player_config, line)
+							if m_yt_player_config:
+								yt_player_config = json.loads(m_yt_player_config.group(1))
+								player_response = json.loads(yt_player_config["args"]["player_response"])
+								itagDict = {}
+								for f in player_response["streamingData"]["adaptiveFormats"]:
+									itagDict[str(f["itag"])] = {
+										"initRange": f["initRange"],
+										"indexRange": f["indexRange"],
+										"audioChannels": f["audioChannels"] if "audioChannels" in f else None
+									}
+								for f in result["adaptiveFormats"]:
+									if f["itag"] in itagDict:
+										i = itagDict[f["itag"]]
+										f["init"] = "{}-{}".format(i["initRange"]["start"], i["initRange"]["end"])
+										f["index"] = "{}-{}".format(i["indexRange"]["start"], i["indexRange"]["end"])
+										f["second__audioChannels"] = i["audioChannels"]
+
 			except Exception:
 				traceback.print_exc()
 
@@ -215,7 +254,7 @@ class Second(object):
 				for file in possible_files:
 					os.unlink(file)
 
-				# return recommendations
+				self.video_cache[id] = result
 				return result
 
 		except youtube_dl.DownloadError:
@@ -223,6 +262,50 @@ class Second(object):
 				"error": "Video unavailable",
 				"identifier": "VIDEO_DOES_NOT_EXIST"
 			}
+
+	@cherrypy.expose
+	@cherrypy.tools.encode()
+	def manifest(self, id):
+		id = id.split(".")[0] # remove extension if present
+		video = self.videos(id)
+
+		if "error" in video:
+			return video
+
+		adaptation_sets_dict = {}
+		for f in video["adaptiveFormats"]:
+			mime = f["second__mime"]
+			if not mime in adaptation_sets_dict:
+				adaptation_sets_dict[mime] = []
+			ads = adaptation_sets_dict[mime]
+
+			representation_attributes = {"id": f["itag"], "codecs": ", ".join(f["second__codecs"]), "bandwidth": f["bitrate"]}
+			if f["second__width"]:
+				representation_attributes["width"] = str(f["second__width"])
+				representation_attributes["height"] = str(f["second__height"])
+				representation_attributes["startWithSAP"] = "1"
+				representation_attributes["maxPlayoutRate"] = "1"
+				representation_attributes["frameRate"] = str(f["fps"])
+			representation = ET.Element("Representation", representation_attributes)
+			if f["second__audioChannels"]:
+				ET.SubElement(representation, "AudioChannelConfiguration", {"schemeIdUri": "urn:mpeg:dash:23003:3:audio_channel_configuration:2011", "value": str(f["second__audioChannels"])})
+			ET.SubElement(representation, "BaseURL").text = f["url"]
+			et_segment_base = ET.SubElement(representation, "SegmentBase", {"indexRange": f["index"]})
+			ET.SubElement(et_segment_base, "Initialization", {"range": f["init"]})
+			ads.append(representation)
+
+		s_meta = B'<?xml version="1.0" encoding="UTF-8"?>'
+		et_mpd = ET.Element("MPD", {"xmlns": "urn:mpeg:dash:schema:mpd:2011", "profiles": "urn:mpeg:dash:profile:full:2011", "minBufferTime": "PT1.5S", "type": "static", "mediaPresentationDuration": "PT282S"})
+		et_period = ET.SubElement(et_mpd, "Period")
+		for (index, key) in list(enumerate(adaptation_sets_dict)):
+			ads = adaptation_sets_dict[key]
+			et_adaptation_set = ET.SubElement(et_period, "AdaptationSet", {"id": str(index), "mimeType": key, "startWithSAP": "1", "subsegmentAlignment": "true"})
+			for representation in ads:
+				et_adaptation_set.append(representation)
+		manifest = s_meta + ET.tostring(et_mpd)
+
+		cherrypy.response.headers["content-type"] = "application/dash+xml"
+		return manifest
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
@@ -290,7 +373,7 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def search(self, *, q, sort_by):
+	def search(self, *, q, sort_by, page, date, duration, type):
 		info = ytdl.extract_info("ytsearchall:{}".format(q), download=False)
 		return list({
 			"type": "video",

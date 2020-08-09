@@ -13,6 +13,7 @@ These endpoints are somewhat implemented:
 - `/api/v1/channels/{part}/{ucid}`
 - `/api/v1/search?q={search}`
 - `/vi/{id}/{file}`
+- `/api/manifest/dash/id/{id}`
 
 ## The future
 
