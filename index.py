@@ -50,7 +50,7 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def videos(self, id):
+	def videos(self, id, **kwargs):
 		if id in self.video_cache:
 			return self.video_cache[id]
 
@@ -273,7 +273,7 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.encode()
-	def manifest(self, id):
+	def manifest(self, id, **kwargs):
 		id = id.split(".")[0] # remove extension if present
 		video = self.videos(id)
 
@@ -325,7 +325,7 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def channels(self, *suffix):
+	def channels(self, *suffix, **kwargs):
 		ucid = ""
 		part = ""
 		if len(suffix) == 1:
@@ -389,7 +389,7 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def search(self, *, q, sort_by, page, date, duration, type):
+	def search(self, *, q, **kwargs):
 		info = ytdl.extract_info("ytsearchall:{}".format(q), download=False)
 		return list({
 			"type": "video",
