@@ -88,7 +88,7 @@ class Second(object):
 				"videoThumbnails": [],
 				"storyboards": None,
 				"description": info["description"],
-				"descriptionHtml": None,
+				"descriptionHtml": info["description"],
 				"published": published,
 				"publishedText": None,
 				"keywords": None,
