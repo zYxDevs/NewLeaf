@@ -39,7 +39,7 @@ class Second(object):
 			endpoints = [
 				["channels", 1, 2],
 				["videos", 1, 1],
-				["search", 0, 0]
+				["search", 0, 1]
 			]
 			for e in endpoints:
 				if vpath[2] == e[0] and len(vpath) >= e[1]+3 and len(vpath) <= e[2]+3:
@@ -389,7 +389,10 @@ class Second(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def search(self, *, q, **kwargs):
+	def search(self, *suffix, q, **kwargs):
+		if suffix == ("suggestions",):
+			return self.suggestions(q=q)
+
 		info = ytdl.extract_info("ytsearchall:{}".format(q), download=False)
 		return list({
 			"type": "video",
@@ -410,6 +413,30 @@ class Second(object):
 			"premium": None,
 			"isUpcoming": None
 		} for video in info["entries"] if "title" in video)
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def suggestions(self, *, q, **kwargs):
+		params = {
+			"client": "youtube",
+			"hl": "en",
+			"gl": "us",
+			"gs_rn": "64",
+			"gs_ri": "youtube",
+			"ds": "yt",
+			"cp": "3",
+			"gs_id": "k",
+			"q": q,
+			"xhr": "t",
+			# "xssi": "t"
+		}
+		with requests.get("https://clients1.google.com/complete/search", params=params) as r:
+			r.raise_for_status()
+			response = r.json()
+			return {
+				"query": q,
+				"suggestions": [s[0] for s in response[1]]
+			}
 
 	@cherrypy.expose
 	def vi(self, id, file):
