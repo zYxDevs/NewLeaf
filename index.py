@@ -67,20 +67,22 @@ def view_count_text_to_number(text):
 	return int(text.split(" ")[0].replace(",", ""))
 
 def get_view_count_or_recommended(view_count_container):
-	if "runs" in view_count_container["viewCountText"]: # has live viewers
-		return int(combine_runs(view_count_container["viewCountText"]))
+	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
+	if "runs" in text: # has live viewers
+		return int(combine_runs(text))
 	else:
-		text = view_count_container["viewCountText"]["simpleText"]
+		text = text["simpleText"]
 		if text == "Recommended for you":
 			return 0 # subject to change?
 		else:
 			return view_count_text_to_number(text)
 
 def get_view_count_text_or_recommended(view_count_container):
-	if "runs" in view_count_container["viewCountText"]: # has live viewers
-		text = combine_runs(view_count_container["viewCountText"])
+	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
+	if "runs" in text: # has live viewers
+		text = combine_runs(text)
 	else: # has past views
-		text = view_count_container["viewCountText"]["simpleText"]
+		text = text["simpleText"]
 		if text == "Recommended for you":
 			return "Recommended for you" #subject to change?
 		else:
@@ -264,7 +266,7 @@ class Second(object):
 				if len(possible_files) == 1:
 					filename = possible_files[0]
 					with open(filename) as file:
-						r_yt_player_config = re.compile(r"""^\s*[^"]+"cfg"[^"]+ytplayer\.config = (\{.*\});ytplayer\.web_player_context_config = {".""")
+						r_yt_player_config = re.compile(r"""^\s*[^"]+"cfg"[^"]+ytplayer\.config = (\{.*\});ytplayer\.web_player_context_config = {".""", re.M)
 						content = file.read()
 
 						yt_initial_data = extract_yt_initial_data(content)
@@ -295,7 +297,7 @@ class Second(object):
 							"viewCount": get_view_count_or_recommended(r)
 						} for r in [get_useful_recommendation_data(r) for r in recommendations if get_useful_recommendation_data(r)])
 
-						m_yt_player_config = re.search(r_yt_player_config, line)
+						m_yt_player_config = re.search(r_yt_player_config, content)
 						if m_yt_player_config:
 							yt_player_config = json.loads(m_yt_player_config.group(1))
 							player_response = json.loads(yt_player_config["args"]["player_response"])
@@ -367,7 +369,7 @@ class Second(object):
 				representation_attributes["maxPlayoutRate"] = "1"
 				representation_attributes["frameRate"] = str(f["fps"])
 			representation = ET.Element("Representation", representation_attributes)
-			if f["second__audioChannels"]:
+			if f.get("second__audioChannels"):
 				ET.SubElement(representation, "AudioChannelConfiguration", {"schemeIdUri": "urn:mpeg:dash:23003:3:audio_channel_configuration:2011", "value": str(f["second__audioChannels"])})
 			ET.SubElement(representation, "BaseURL").text = f["url"]
 			et_segment_base = ET.SubElement(representation, "SegmentBase", {"indexRange": f["index"]})
