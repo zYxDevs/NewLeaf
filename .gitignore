@@ -3,5 +3,9 @@
 \#*#
 .vscode
 
+# Artifacts
+__pycache__
+
 # Personal
 /generic-updater
+/configuration.py
