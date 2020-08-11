@@ -100,6 +100,26 @@ def get_length_text_or_live_now(length_container):
 	else:
 		return "Live now"
 
+def generate_video_thumbnails(id):
+	types = [
+		# quality, url part, width, height
+		["maxres", "maxresdefault", 1280, 720],
+		["maxresdefault", "maxresdefault", 180, 720],
+		["sddefault", "sddefault", 640, 480],
+		["high", "hqdefault", 480, 360],
+		["medium", "mqdefault", 320, 180],
+		["default", "default", 120, 90],
+		["start", "1", 120, 90],
+		["middle", "2", 120, 90],
+		["end", "3", 120, 90]
+	]
+	return [{
+		"quality": type[0],
+		"url": "https://i.ytimg.com/vi/{}/{}.jpg".format(id, type[1]),
+		"width": type[2],
+		"height": type[3]
+	} for type in types]
+
 class Second(object):
 	def __init__(self):
 		self.video_cache = TTLCache(maxsize=50, ttl=300)
@@ -161,7 +181,7 @@ class Second(object):
 				"type": "video",
 				"title": info["title"],
 				"videoId": info["id"],
-				"videoThumbnails": [],
+				"videoThumbnails": generate_video_thumbnails(info["id"]),
 				"storyboards": None,
 				"description": info["description"],
 				"descriptionHtml": info["description"],
@@ -263,7 +283,7 @@ class Second(object):
 						result["recommendedVideos"] = list({
 							"videoId": r["videoId"],
 							"title": r["title"]["simpleText"],
-							"videoThumbnails": [],
+							"videoThumbnails": generate_video_thumbnails(r["videoId"]),
 							"author": combine_runs(r["longBylineText"]),
 							"authorUrl": r["longBylineText"]["runs"][0]["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"],
 							"authorId": r["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"],
@@ -403,7 +423,7 @@ class Second(object):
 					"author": info["uploader"],
 					"authorId": info["uploader_id"],
 					"authorUrl": info["uploader_url"],
-					"videoThumbnails": [],
+					"videoThumbnails": generate_video_thumbnails(info["id"]),
 					"description": None,
 					"descriptionHtml": None,
 					"viewCount": None,
@@ -455,7 +475,7 @@ class Second(object):
 							"author": combine_runs(video["longBylineText"]),
 							"authorId": video["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"],
 							"authorUrl": video["longBylineText"]["runs"][0]["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"],
-							"videoThumbnails": [],
+							"videoThumbnails": generate_video_thumbnails(video["videoId"]),
 							"description": combine_runs(video["descriptionSnippet"]) if "descriptionSnippet" in video else "",
 							"descriptionHtml": combine_runs_html(video["descriptionSnippet"]) if "descriptionSnippet" in video else "",
 							"viewCount": get_view_count_or_recommended(video),
@@ -484,7 +504,7 @@ class Second(object):
 				"author": None,
 				"authorId": None,
 				"authorUrl": None,
-				"videoThumbnails": [],
+				"videoThumbnails": generate_video_thumbnails(video["id"]),
 				"description": None,
 				"descriptionHtml": None,
 				"viewCount": None,
