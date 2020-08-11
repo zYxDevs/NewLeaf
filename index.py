@@ -104,6 +104,7 @@ class Second(object):
 	def __init__(self):
 		self.video_cache = TTLCache(maxsize=50, ttl=300)
 		self.search_cache = TTLCache(maxsize=50, ttl=300)
+		self.search_suggestions_cache = TTLCache(maxsize=200, ttl=60)
 
 	def _cp_dispatch(self, vpath):
 		if vpath[:4] == ["api", "manifest", "dash", "id"]:
@@ -499,6 +500,9 @@ class Second(object):
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
 	def suggestions(self, *, q, **kwargs):
+		if q in self.search_suggestions_cache:
+			return self.search_suggestions_cache[q]
+
 		params = {
 			"client": "youtube",
 			"hl": "en",
@@ -515,10 +519,12 @@ class Second(object):
 		with requests.get("https://clients1.google.com/complete/search", params=params) as r:
 			r.raise_for_status()
 			response = r.json()
-			return {
+			result = {
 				"query": q,
 				"suggestions": [s[0] for s in response[1]]
 			}
+			self.search_suggestions_cache[q] = result
+			return result
 
 	@cherrypy.expose
 	def vi(self, id, file):
