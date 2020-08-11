@@ -553,5 +553,5 @@ class Second(object):
 			cherrypy.response.headers["content-type"] = r.headers["content-type"]
 			return r # no idea if this is a good way to do it, but it definitely works! :D
 
-cherrypy.config.update({"server.socket_port": 3000})
+cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
 cherrypy.quickstart(Second())
