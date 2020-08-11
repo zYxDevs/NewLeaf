@@ -1,3 +1,4 @@
+import configuration
 import cherrypy
 import json
 import youtube_dl
@@ -115,7 +116,8 @@ def generate_video_thumbnails(id):
 	]
 	return [{
 		"quality": type[0],
-		"url": "https://i.ytimg.com/vi/{}/{}.jpg".format(id, type[1]),
+		"url": "{}/vi/{}/{}.jpg".format(configuration.website_origin, id, type[1]),
+		"second__originalUrl": "https://i.ytimg.com/vi/{}/{}.jpg".format(id, type[1]),
 		"width": type[2],
 		"height": type[3]
 	} for type in types]
@@ -212,7 +214,7 @@ class Second(object):
 				"isListed": None,
 				"liveNow": None,
 				"isUpcoming": None,
-				"dashUrl": "/api/manifest/dash/id/{}".format(info["id"]),
+				"dashUrl": "{}/api/manifest/dash/id/{}".format(configuration.website_origin, info["id"]),
 				"second__providedDashUrl": None,
 				"adaptiveFormats": [{
 					"index": None,
