@@ -39,6 +39,8 @@ def extract_yt_initial_data(content):
 		raise Exception("Could not match ytInitialData in content")
 
 def combine_runs(runs):
+	if "simpleText" in runs: # check if simpletext instead
+		return runs["simpleText"]
 	if "runs" in runs: # check if already unpacked
 		runs = runs["runs"]
 	return "".join([r["text"] for r in runs])
@@ -65,7 +67,7 @@ def combine_runs_html(runs):
 	return result
 
 def add_html_links(text):
-	r_link = re.compile(r"""https?://[a-z-]+(?:\.[a-z-]+)+(?:/[^\s,<>)]*)?""") # it's okay, I guess.
+	r_link = re.compile(r"""https?://[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:/[^\s,<>)]*)?""") # it's okay, I guess.
 	match = r_link.search(text)
 	if match is not None:
 		link = match.group()
@@ -132,6 +134,20 @@ def generate_video_thumbnails(id):
 		"width": type[2],
 		"height": type[3]
 	} for type in types]
+
+def generate_full_author_thumbnails(original):
+	r_size_part = re.compile(r"""=s[0-9]+-""")
+	match = r_size_part.search(original[0]["url"])
+	if match:
+		template = re.sub(r_size_part, "=s{}-", original[0]["url"])
+		sizes = [32, 48, 76, 100, 176, 512]
+		return [{
+			"url": template.format(size),
+			"width": size,
+			"height": size
+		} for size in sizes]
+	else:
+		return original
 
 def normalise_url_protocol(url):
 	if url.startswith("//"):
@@ -217,7 +233,7 @@ class Second(object):
 				"videoThumbnails": generate_video_thumbnails(info["id"]),
 				"storyboards": None,
 				"description": info["description"],
-				"descriptionHtml": info["description"],
+				"descriptionHtml": add_html_links(escape_html_textcontent(info["description"])),
 				"published": published,
 				"publishedText": None,
 				"keywords": None,
@@ -324,7 +340,8 @@ class Second(object):
 							"lengthSeconds": get_length_or_live_now(r),
 							"second__lengthText": get_length_text_or_live_now(r),
 							"viewCountText": get_view_count_text_or_recommended(r),
-							"viewCount": get_view_count_or_recommended(r)
+							"viewCount": get_view_count_or_recommended(r),
+							"second__liveNow": is_live(r)
 						} for r in [get_useful_recommendation_data(r) for r in recommendations if get_useful_recommendation_data(r)])
 
 						m_yt_player_config = re.search(r_yt_player_config, content)
@@ -428,10 +445,13 @@ class Second(object):
 		if len(suffix) == 1:
 			ucid = suffix[0]
 		else: # len(suffix) >= 2
-			if suffix[0] == "videos" or suffix[0] == "latest":
+			if suffix[0] == "videos" or suffix[0] == "latest" or suffix[0] == "playlists":
 				[part, ucid] = suffix
 			else:
 				[ucid, part] = suffix
+
+		if part == "playlists":
+			return []
 
 		if part == "latest":
 			# use RSS
@@ -475,7 +495,8 @@ class Second(object):
 				else: # part == "videos"
 					return self.channel_cache[ucid]["latestVideos"]
 
-			with requests.get("https://www.youtube.com/channel/{}/videos".format(ucid)) as r:
+			channel_type = "channel" if len(ucid) == 24 and ucid[:2] == "UC" else "user"
+			with requests.get("https://www.youtube.com/{}/{}/videos".format(channel_type, ucid)) as r:
 				r.raise_for_status()
 				yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 				header = yt_initial_data["header"]["c4TabbedHeaderRenderer"]
@@ -485,7 +506,7 @@ class Second(object):
 				author_banners = header["banner"]["thumbnails"]
 				for t in author_banners:
 					t["url"] = normalise_url_protocol(t["url"])
-				author_thumbnails = header["avatar"]["thumbnails"]
+				author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
 				subscriber_count = combine_runs(header["subscriberCountText"])
 				description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
 				allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
@@ -497,11 +518,16 @@ class Second(object):
 				)
 				latest_videos = []
 				for v in videos:
-					length_text = next(o for o in v["thumbnailOverlays"] if "thumbnailOverlayTimeStatusRenderer" in o) \
-						["thumbnailOverlayTimeStatusRenderer"]["text"]["simpleText"]
+					length_text = "LIVE"
+					length_seconds = -1
+					for o in v["thumbnailOverlays"]:
+						if "thumbnailOverlayTimeStatusRenderer" in o:
+							length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
+							if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
+								length_text_to_seconds(length_text)
 					latest_videos.append({
 						"type": "video",
-						"title": v["title"]["simpleText"],
+						"title": combine_runs(v["title"]),
 						"videoId": v["videoId"],
 						"author": author,
 						"authorId": author_id,
@@ -509,12 +535,12 @@ class Second(object):
 						"videoThumbnails": generate_video_thumbnails(v["videoId"]),
 						"description": "",
 						"descriptionHtml": "",
-						"viewCount": view_count_text_to_number(v["viewCountText"]["simpleText"]),
-						"second__viewCountText": v["viewCountText"]["simpleText"],
-						"second__viewCountTextShort": v["shortViewCountText"]["simpleText"],
+						"viewCount": view_count_text_to_number(combine_runs(v["viewCountText"])),
+						"second__viewCountText": combine_runs(v["viewCountText"]),
+						"second__viewCountTextShort": combine_runs(v["shortViewCountText"]),
 						"published": 0,
-						"publishedText": v["publishedTimeText"]["simpleText"],
-						"lengthSeconds": length_text_to_seconds(length_text),
+						"publishedText": v["publishedTimeText"]["simpleText"] if "publishedTimeText" in v else "Live now",
+						"lengthSeconds": length_seconds,
 						"second__lengthText": length_text,
 						"liveNow": None,
 						"paid": None,
@@ -581,7 +607,7 @@ class Second(object):
 							"viewCount": get_view_count_or_recommended(video),
 							"second__viewCountText": get_view_count_text_or_recommended(video),
 							"published": None,
-							"publishedText": video["publishedTimeText"]["simpleText"],
+							"publishedText": video["publishedTimeText"]["simpleText"] if "publishedTimeText" in video else "Live now",
 							"lengthSeconds": get_length_or_live_now(video),
 							"second__lengthText": get_length_text_or_live_now(video),
 							"liveNow": is_live(video),
