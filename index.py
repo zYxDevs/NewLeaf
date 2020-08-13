@@ -69,7 +69,7 @@ def view_count_text_to_number(text):
 def get_view_count_or_recommended(view_count_container):
 	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
 	if "runs" in text: # has live viewers
-		return int(combine_runs(text))
+		return view_count_text_to_number(combine_runs(text))
 	else:
 		text = text["simpleText"]
 		if text == "Recommended for you":
@@ -80,7 +80,7 @@ def get_view_count_or_recommended(view_count_container):
 def get_view_count_text_or_recommended(view_count_container):
 	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
 	if "runs" in text: # has live viewers
-		text = combine_runs(text)
+		return combine_runs(text)
 	else: # has past views
 		text = text["simpleText"]
 		if text == "Recommended for you":
@@ -273,7 +273,8 @@ class Second(object):
 						views = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][0]\
 							["videoPrimaryInfoRenderer"]["viewCount"]["videoViewCountRenderer"]
 						result["second__viewCountText"] = get_view_count_text_or_recommended(views)
-						result["second__viewCountTextShort"] = views["shortViewCount"]["simpleText"]
+						if "shortViewCount" in views:
+							result["second__viewCountTextShort"] = views["shortViewCount"]["simpleText"]
 						recommendations = yt_initial_data["contents"]["twoColumnWatchNextResults"]["secondaryResults"]\
 							["secondaryResults"]["results"]
 
@@ -303,6 +304,7 @@ class Second(object):
 							player_response = json.loads(yt_player_config["args"]["player_response"])
 							if "dashManifestUrl" in player_response["streamingData"]:
 								result["second__providedDashUrl"] = player_response["streamingData"]["dashManifestUrl"]
+							result["liveNow"] = player_response["videoDetails"]["isLiveContent"]
 							# result = player_response
 							# return result
 							itagDict = {}
