@@ -170,8 +170,14 @@ def uncompress_counter(text):
 
 def past_text_to_time(text):
 	words = text.split(" ")
-	assert len(words) == 3, "3 words"
-	assert words[2] == "ago", 'ends with "ago"'
+	if words[0] == "Streamed":
+		words = words[1:]
+	if len(words) != 3:
+		print(words)
+		raise Exception("Past text is not 3 words")
+	if words[2] != "ago":
+		print(words)
+		raise Exception('Past text does not end with "ago"')
 	number = int(words[0])
 	unit = words[1][:2]
 	multiplier = 1
