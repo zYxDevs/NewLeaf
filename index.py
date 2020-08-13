@@ -553,7 +553,7 @@ class Second(object):
 						if "thumbnailOverlayTimeStatusRenderer" in o:
 							length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
 							if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
-								length_text_to_seconds(length_text)
+								length_seconds = length_text_to_seconds(length_text)
 					published = 0
 					published_text = "Live now"
 					if "publishedTimeText" in v:
