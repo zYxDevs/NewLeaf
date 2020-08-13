@@ -168,6 +168,29 @@ def uncompress_counter(text):
 			multiplier = 1000000000
 		return int(float(text[:-1]) * multiplier)
 
+def past_text_to_time(text):
+	words = text.split(" ")
+	assert len(words) == 3, "3 words"
+	assert words[2] == "ago", 'ends with "ago"'
+	number = int(words[0])
+	unit = words[1][:2]
+	multiplier = 1
+	if unit == "se":
+		multiplier = 1
+	elif unit == "mi":
+		multiplier = 60
+	elif unit == "ho":
+		multiplier = 60 * 60
+	elif unit == "da":
+		multiplier = 24 * 60 * 60
+	elif unit == "we":
+		multiplier = 7 * 24 * 60 * 60
+	elif unit == "mo":
+		multiplier = 30 * 24 * 60 * 60
+	elif unit == "ye":
+		multiplier = 365 * 24 * 60 * 60
+	return int(datetime.datetime.now().timestamp()) - number * multiplier
+
 class Second(object):
 	def __init__(self):
 		self.video_cache = TTLCache(maxsize=50, ttl=300)
@@ -525,6 +548,11 @@ class Second(object):
 							length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
 							if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
 								length_text_to_seconds(length_text)
+					published = 0
+					published_text = "Live now"
+					if "publishedTimeText" in v:
+						published_text = v["publishedTimeText"]["simpleText"]
+						published = past_text_to_time(published_text)
 					latest_videos.append({
 						"type": "video",
 						"title": combine_runs(v["title"]),
@@ -538,8 +566,8 @@ class Second(object):
 						"viewCount": view_count_text_to_number(combine_runs(v["viewCountText"])),
 						"second__viewCountText": combine_runs(v["viewCountText"]),
 						"second__viewCountTextShort": combine_runs(v["shortViewCountText"]),
-						"published": 0,
-						"publishedText": v["publishedTimeText"]["simpleText"] if "publishedTimeText" in v else "Live now",
+						"published": published,
+						"publishedText": published_text,
 						"lengthSeconds": length_seconds,
 						"second__lengthText": length_text,
 						"liveNow": None,
@@ -594,6 +622,11 @@ class Second(object):
 				for item in items:
 					if "videoRenderer" in item:
 						video = item["videoRenderer"]
+						published = 0
+						published_text = "Live now"
+						if "publishedTimeText" in video:
+							published_text = video["publishedTimeText"]["simpleText"]
+							published = past_text_to_time(published_text)
 						results.append({
 							"type": "video",
 							"title": combine_runs(video["title"]),
@@ -606,8 +639,8 @@ class Second(object):
 							"descriptionHtml": combine_runs_html(video["descriptionSnippet"]) if "descriptionSnippet" in video else "",
 							"viewCount": get_view_count_or_recommended(video),
 							"second__viewCountText": get_view_count_text_or_recommended(video),
-							"published": None,
-							"publishedText": video["publishedTimeText"]["simpleText"] if "publishedTimeText" in video else "Live now",
+							"published": published,
+							"publishedText": published_text,
 							"lengthSeconds": get_length_or_live_now(video),
 							"second__lengthText": get_length_text_or_live_now(video),
 							"liveNow": is_live(video),
