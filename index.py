@@ -112,7 +112,7 @@ class Second(object):
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
 	def suggestions(self, *, q, **kwargs):
-		return extract_suggestions(q)
+		return extract_search_suggestions(q)
 
 	@cherrypy.expose
 	def vi(self, id, file):
