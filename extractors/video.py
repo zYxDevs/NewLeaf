@@ -72,8 +72,8 @@ def extract_video(id):
 			"viewCount": info["view_count"],
 			"second__viewCountText": None,
 			"second__viewCountTextShort": None,
-			"likeCount": info["like_count"],
-			"dislikeCount": info["dislike_count"],
+			"likeCount": 0,
+			"dislikeCount": 0,
 			"paid": None,
 			"premium": None,
 			"isFamilyFriendly": None,
@@ -163,13 +163,24 @@ def get_more_stuff_from_file(id, result):
 				content = file.read()
 
 				yt_initial_data = extract_yt_initial_data(content)
-				views = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][0]\
-					["videoPrimaryInfoRenderer"]["viewCount"]["videoViewCountRenderer"]
+
+				main_video = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][0]["videoPrimaryInfoRenderer"]
+				views = main_video["viewCount"]["videoViewCountRenderer"]
 				result["second__viewCountText"] = get_view_count_text_or_recommended(views)
 				if "shortViewCount" in views:
 					result["second__viewCountTextShort"] = views["shortViewCount"]["simpleText"]
+				if "sentimentBar" in main_video:
+					sentiment = main_video["sentimentBar"]["sentimentBarRenderer"]["tooltip"]
+					result["likeCount"] = view_count_text_to_number(sentiment.split(" / ")[0])
+					result["dislikeCount"] = view_count_text_to_number(sentiment.split(" / ")[1])
+					result["allowRatings"] = True
+				else:
+					result["allowRatings"] = False
 				recommendations = yt_initial_data["contents"]["twoColumnWatchNextResults"]["secondaryResults"]\
 					["secondaryResults"]["results"]
+
+				# result = yt_initial_data
+				# return result
 
 				def get_useful_recommendation_data(r):
 					if "compactVideoRenderer" in r:
