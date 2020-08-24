@@ -7,6 +7,7 @@ import traceback
 import youtube_dl
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data
+from math import floor
 from cachetools import TTLCache
 
 video_cache = TTLCache(maxsize=50, ttl=300)
@@ -24,6 +25,27 @@ def get_created_files(id):
 	if id[0] == "-":
 		id = "_" + id[1:] # youtube-dl changes - to _ at the start, presumably to not accidentally trigger switches with * in shell
 	return (f for f in os.listdir() if f.startswith("{}_".format(id)))
+
+def format_order(format):
+	# most significant to least significant
+	# key, max, order, transform
+	# asc: lower number comes first, desc: higher number comes first
+	spec = [
+		["second__height", 8000, "desc", lambda x: floor(x/96) if x else 0],
+		["fps", 100, "desc", lambda x: floor(x/10) if x else 0],
+		["type", " "*60, "asc", lambda x: len(x)],
+	]
+	total = 0
+	for i in range(len(spec)):
+		s = spec[i]
+		diff = s[3](format[s[0]])
+		if s[2] == "asc":
+			diff = s[3](s[1]) - diff
+		total += diff
+		if i+1 < len(spec):
+			s2 = spec[i+1]
+			total *= s2[3](s2[1])
+	return -total
 
 def extract_video(id):
 	if id in video_cache:
@@ -104,7 +126,7 @@ def extract_video(id):
 				"type": format_type(format),
 				"second__mime": format_mime(format),
 				"second__codecs": format_codecs(format),
-				"clen": str(format["filesize"]),
+				"clen": str(format["filesize"]) if format["filesize"] else None,
 				"lmt": None,
 				"projectionType": None,
 				"fps": format["fps"],
@@ -113,7 +135,9 @@ def extract_video(id):
 				"resolution": format["format_note"],
 				"qualityLabel": format["format_note"],
 				"second__width": format["width"],
-				"second__height": format["height"]
+				"second__height": format["height"],
+				"second__audioChannels": None,
+				"second__order": 0
 			} for format in info["formats"] if format_is_adaptive(format)],
 			"formatStreams": [{
 				"url": format["url"],
@@ -143,6 +167,10 @@ def extract_video(id):
 			"error": "Video unavailable",
 			"identifier": "VIDEO_DOES_NOT_EXIST"
 		}
+
+	except Exception:
+		traceback.print_exc()
+		print("messed up in original transform.")
 
 	finally:
 		created_files = get_created_files(id)
@@ -233,6 +261,7 @@ def get_more_stuff_from_file(id, result):
 								if f["fps"] > 30:
 									label += str(f["fps"])
 								f["qualityLabel"] = label
+							f["second__order"] = format_order(f)
 
 	except Exception:
 		print("messed up extracting recommendations.")
