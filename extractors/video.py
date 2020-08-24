@@ -226,6 +226,13 @@ def get_more_stuff_from_file(id, result):
 							f["init"] = "{}-{}".format(i["initRange"]["start"], i["initRange"]["end"])
 							f["index"] = "{}-{}".format(i["indexRange"]["start"], i["indexRange"]["end"])
 							f["second__audioChannels"] = i["audioChannels"]
+							if f["second__height"]:
+								resolution = str(f["second__height"]) + "p"
+								f["resolution"] = resolution
+								label = resolution
+								if f["fps"] > 30:
+									label += str(f["fps"])
+								f["qualityLabel"] = label
 
 	except Exception:
 		print("messed up extracting recommendations.")
