@@ -35,7 +35,7 @@ def combine_runs_html(runs):
 	return result
 
 def add_html_links(text):
-	r_link = re.compile(r"""https?://[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:/[^\s,<>)]*)?""") # it's okay, I guess.
+	r_link = re.compile(r"""https?://[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+(?:/[^\s,<>)]*)?""") # it's okay, I guess.
 	match = r_link.search(text)
 	if match is not None:
 		link = match.group()
