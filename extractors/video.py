@@ -121,7 +121,7 @@ def extract_video(id):
 				"index": None,
 				"bitrate": str(int(format["tbr"]*1000)),
 				"init": None,
-				"url": format["url"],
+				"url": format["fragment_base_url"] if format["protocol"] == "http_dash_segments" else format["url"],
 				"itag": format["format_id"],
 				"type": format_type(format),
 				"second__mime": format_mime(format),
@@ -238,8 +238,10 @@ def get_more_stuff_from_file(id, result):
 					if "dashManifestUrl" in player_response["streamingData"]:
 						result["second__providedDashUrl"] = player_response["streamingData"]["dashManifestUrl"]
 					result["liveNow"] = player_response["videoDetails"]["isLiveContent"]
+
 					# result = player_response
 					# return result
+
 					itagDict = {}
 					for f in player_response["streamingData"]["adaptiveFormats"]:
 						if "indexRange" in f:
