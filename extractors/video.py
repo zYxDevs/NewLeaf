@@ -61,25 +61,6 @@ def extract_video(id):
 		day = int(info["upload_date"][6:8])
 		published = int(datetime.datetime(year, month, day).timestamp())
 
-		# Adaptive formats have either audio or video, format streams have both
-		def format_is_adaptive(format):
-			return format["acodec"] == "none" or format["vcodec"] == "none"
-
-		def format_mime(format):
-			sense = "video" if format["vcodec"] != "none" else "audio"
-			return "{}/{}".format(sense, format["ext"])
-
-		def format_codecs(format):
-			codecs = []
-			if format["vcodec"] != "none":
-				codecs.append(format["vcodec"])
-			if format["acodec"] != "none":
-				codecs.append(format["acodec"])
-			return codecs
-
-		def format_type(format):
-			return '{}; codecs="{}"'.format(format_mime(format), ", ".join(format_codecs(format)))
-
 		result = {
 			"type": "video",
 			"title": info["title"],
@@ -117,46 +98,72 @@ def extract_video(id):
 			"isUpcoming": None,
 			"dashUrl": "{}/api/manifest/dash/id/{}".format(configuration.website_origin, info["id"]),
 			"second__providedDashUrl": None,
-			"adaptiveFormats": [{
-				"index": None,
-				"bitrate": str(int(format["tbr"]*1000)),
-				"init": None,
-				"url": format["fragment_base_url"] if format["protocol"] == "http_dash_segments" else format["url"],
-				"itag": format["format_id"],
-				"type": format_type(format),
-				"second__mime": format_mime(format),
-				"second__codecs": format_codecs(format),
-				"clen": str(format["filesize"]) if format["filesize"] else None,
-				"lmt": None,
-				"projectionType": None,
-				"fps": format["fps"],
-				"container": format["ext"],
-				"encoding": None,
-				"resolution": format["format_note"],
-				"qualityLabel": format["format_note"],
-				"second__width": format["width"],
-				"second__height": format["height"],
-				"second__audioChannels": None,
-				"second__order": 0
-			} for format in info["formats"] if format_is_adaptive(format)],
-			"formatStreams": [{
-				"url": format["url"],
-				"itag": format["format_id"],
-				"type": format_type(format),
-				"second__mime": format_mime(format),
-				"quality": None,
-				"fps": format["fps"],
-				"container": format["ext"],
-				"encoding": None,
-				"resolution": format["format_note"],
-				"qualityLabel": format["format_note"],
-				"size": "{}x{}".format(format["width"], format["height"]),
-				"second__width": format["width"],
-				"second__height": format["height"]
-			} for format in info["formats"] if not format_is_adaptive(format)],
+			"adaptiveFormats": [],
+			"formatStreams": [],
 			"captions": [],
 			"recommendedVideos": []
 		}
+
+		for format in info["formats"]:
+			# Adaptive formats have either audio or video, format streams have both
+			is_adaptive = format["acodec"] == "none" or format["vcodec"] == "none"
+			sense = "video" if format["vcodec"] != "none" else "audio"
+			mime = sense + "/" + format["ext"]
+			codecs = []
+			if format["vcodec"] != "none":
+				codecs.append(format["vcodec"])
+			if format["acodec"] != "none":
+				codecs.append(format["acodec"])
+			result_type = '{}; codecs="{}"'.format(mime, ", ".join(codecs))
+
+			if is_adaptive:
+				url = ""
+				if format["protocol"] == "http_dash_segments":
+					# this is http dash, which is annoying and doesn't work in <video>.
+					# we have a fragment_base_url, which seems to be playable for all audio, but only with certain video itags??? very confused
+					if format["acodec"] == "none" and format["format_id"] not in ["134", "136"]:
+						continue
+					url = format["fragment_base_url"]
+				else: # just a normal media file
+					url = format["url"]
+				result["adaptiveFormats"].append({
+					"index": None,
+					"bitrate": str(int(format["tbr"]*1000)),
+					"init": None,
+					"url": url,
+					"itag": format["format_id"],
+					"type": result_type,
+					"second__mime": mime,
+					"second__codecs": codecs,
+					"clen": str(format["filesize"]) if format["filesize"] else None,
+					"lmt": None,
+					"projectionType": None,
+					"fps": format["fps"],
+					"container": format["ext"],
+					"encoding": None,
+					"resolution": format["format_note"],
+					"qualityLabel": format["format_note"],
+					"second__width": format["width"],
+					"second__height": format["height"],
+					"second__audioChannels": None,
+					"second__order": 0
+				})
+			else: # format is not adaptive
+				result["formatStreams"].append({
+					"url": format["url"],
+					"itag": format["format_id"],
+					"type": result_type,
+					"second__mime": mime,
+					"quality": None,
+					"fps": format["fps"],
+					"container": format["ext"],
+					"encoding": None,
+					"resolution": format["format_note"],
+					"qualityLabel": format["format_note"],
+					"size": str(format["width"]) + "x" + str(format["height"]),
+					"second__width": format["width"],
+					"second__height": format["height"]
+				})
 
 		result = get_more_stuff_from_file(info["id"], result)
 
