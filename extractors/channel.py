@@ -19,10 +19,14 @@ def extract_channel(ucid):
 		author = header["title"]
 		author_id = header["channelId"]
 		author_url = header["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"]
-		author_banners = header["banner"]["thumbnails"]
-		for t in author_banners:
-			t["url"] = normalise_url_protocol(t["url"])
-		author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
+		author_banners = []
+		if "banner" in header:
+			author_banners = header["banner"]["thumbnails"]
+			for t in author_banners:
+				t["url"] = normalise_url_protocol(t["url"])
+		author_thumbnails = []
+		if "avatar" in header:
+			author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
 		subscriber_count = combine_runs(header["subscriberCountText"])
 		description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
 		allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
