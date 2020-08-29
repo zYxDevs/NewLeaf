@@ -17,18 +17,6 @@ from extractors.manifest import extract_manifest
 from extractors.search import extract_search
 from extractors.suggestions import extract_search_suggestions
 
-ytdl_opts = {
-	"quiet": True,
-	"dump_single_json": True,
-	"playlist_items": "1-100",
-	"extract_flat": "in_playlist"
-}
-ytdl = youtube_dl.YoutubeDL(ytdl_opts)
-
-ytdl_save_opts = ytdl_opts.copy()
-ytdl_save_opts["write_pages"] = True
-ytdl_save = youtube_dl.YoutubeDL(ytdl_save_opts)
-
 class Second(object):
 	def __init__(self):
 		self.video_cache = TTLCache(maxsize=50, ttl=300)
