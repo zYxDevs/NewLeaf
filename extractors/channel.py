@@ -120,6 +120,7 @@ def extract_channel_latest(ucid):
 			media_group = entry.find("{http://search.yahoo.com/mrss/}group")
 			description = media_group.find("{http://search.yahoo.com/mrss/}description").text
 			media_community = media_group.find("{http://search.yahoo.com/mrss/}community")
+			published = int(dateutil.parser.isoparse(entry.find("{http://www.w3.org/2005/Atom}published").text).timestamp())
 			results.append({
 				"type": "video",
 				"title": entry.find("{http://www.w3.org/2005/Atom}title").text,
@@ -131,7 +132,8 @@ def extract_channel_latest(ucid):
 				"description": description,
 				"descriptionHtml": add_html_links(escape_html_textcontent(description)),
 				"viewCount": int(media_community.find("{http://search.yahoo.com/mrss/}statistics").attrib["views"]),
-				"published": int(dateutil.parser.isoparse(entry.find("{http://www.w3.org/2005/Atom}published").text).timestamp()),
+				"published": published,
+				"publishedText": time_to_past_text(published),
 				"lengthSeconds": None,
 				"liveNow": None,
 				"paid": None,

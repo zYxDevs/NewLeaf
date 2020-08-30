@@ -1,6 +1,7 @@
 import configuration
 import datetime
 import re
+import time
 
 def length_text_to_seconds(text):
 	s = text.split(":")
@@ -164,3 +165,23 @@ def past_text_to_time(text):
 	elif unit == "ye":
 		multiplier = 365 * 24 * 60 * 60
 	return int(datetime.datetime.now().timestamp()) - number * multiplier
+
+def time_to_past_text(timestamp):
+	now = int(time.time())
+	diff = now - timestamp
+	print(diff, type(diff))
+	units = [
+		["year", 365 * 24 * 60 * 60],
+		["month", 30 * 24 * 60 * 60],
+		["week", 7 * 24 * 60 * 60],
+		["day", 24 * 60 * 60],
+		["hour", 60 * 60],
+		["minute", 60],
+		["second", 1]
+	]
+	for index in range(len(units)):
+		unit_name, unit_value = units[index]
+		if diff > unit_value or index + 1 >= len(units):
+			number = diff // unit_value
+			plural_unit = unit_name if number == 1 else unit_name + "s"
+			return "{} {} ago".format(number, plural_unit)
