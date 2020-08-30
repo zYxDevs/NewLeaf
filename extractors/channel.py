@@ -6,6 +6,7 @@ from tools.extractors import extract_yt_initial_data
 from cachetools import TTLCache
 
 channel_cache = TTLCache(maxsize=50, ttl=300)
+channel_latest_cache = TTLCache(maxsize=500, ttl=300)
 
 def extract_channel(ucid):
 	if ucid in channel_cache:
@@ -107,6 +108,10 @@ def extract_channel_videos(ucid):
 		return channel["latestVideos"]
 
 def extract_channel_latest(ucid):
+	if ucid in channel_latest_cache:
+		return channel_latest_cache[ucid]
+
+	print("making request for "+ucid)
 	with requests.get("https://www.youtube.com/feeds/videos.xml?channel_id={}".format(ucid)) as r:
 		r.raise_for_status()
 		feed = ET.fromstring(r.content)
@@ -140,4 +145,7 @@ def extract_channel_latest(ucid):
 				"premium": None,
 				"isUpcoming": None
 			})
+
+		channel_latest_cache[ucid] = results
+
 		return results
