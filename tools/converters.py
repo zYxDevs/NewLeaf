@@ -169,7 +169,6 @@ def past_text_to_time(text):
 def time_to_past_text(timestamp):
 	now = int(time.time())
 	diff = now - timestamp
-	print(diff, type(diff))
 	units = [
 		["year", 365 * 24 * 60 * 60],
 		["month", 30 * 24 * 60 * 60],
