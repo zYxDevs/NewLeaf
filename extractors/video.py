@@ -5,6 +5,7 @@ import os
 import re
 import traceback
 import youtube_dl
+import urllib.error
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data
 from math import floor
@@ -169,11 +170,21 @@ def extract_video(id):
 
 		return result
 
-	except youtube_dl.DownloadError:
-		return {
-			"error": "Video unavailable",
-			"identifier": "VIDEO_DOES_NOT_EXIST"
-		}
+	except youtube_dl.DownloadError as e:
+		if isinstance(e.exc_info[1], urllib.error.HTTPError):
+			if e.exc_info[1].code == 429:
+				result = {
+					"error": "Could not extract video info. Instance is likely blocked.",
+					"identifier": "RATE_LIMITED_BY_YOUTUBE"
+				}
+			else:
+				result = {
+					"error": "Received unexpected status code {}.".format(e.exc_info[1].code)
+				}
+		else:
+			result = {
+				"error": "Unknown download error."
+			}
 
 	except Exception:
 		traceback.print_exc()
