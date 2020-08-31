@@ -111,7 +111,6 @@ def extract_channel_latest(ucid):
 	if ucid in channel_latest_cache:
 		return channel_latest_cache[ucid]
 
-	print("making request for "+ucid)
 	with requests.get("https://www.youtube.com/feeds/videos.xml?channel_id={}".format(ucid)) as r:
 		r.raise_for_status()
 		feed = ET.fromstring(r.content)
