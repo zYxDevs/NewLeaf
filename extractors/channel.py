@@ -130,7 +130,7 @@ def extract_channel_latest(ucid):
 		for entry in feed.findall("{http://www.w3.org/2005/Atom}entry"):
 			id = entry.find("{http://www.youtube.com/xml/schemas/2015}videoId").text
 			media_group = entry.find("{http://search.yahoo.com/mrss/}group")
-			description = media_group.find("{http://search.yahoo.com/mrss/}description").text
+			description = media_group.find("{http://search.yahoo.com/mrss/}description").text or ""
 			media_community = media_group.find("{http://search.yahoo.com/mrss/}community")
 			published_entry = entry.find("{http://www.w3.org/2005/Atom}published")
 			if published_entry is not None: # sometimes youtube does not provide published dates, no idea why.
@@ -144,7 +144,7 @@ def extract_channel_latest(ucid):
 					"authorUrl": author_url,
 					"videoThumbnails": generate_video_thumbnails(id),
 					"description": description,
-					"descriptionHtml": description and add_html_links(escape_html_textcontent(description)),
+					"descriptionHtml": add_html_links(escape_html_textcontent(description)),
 					"viewCount": int(media_community.find("{http://search.yahoo.com/mrss/}statistics").attrib["views"]),
 					"published": published,
 					"publishedText": time_to_past_text(published),
