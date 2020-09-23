@@ -1,3 +1,4 @@
+import cherrypy
 import dateutil.parser
 import requests
 import xml.etree.ElementTree as ET
@@ -125,33 +126,45 @@ def extract_channel_latest(ucid):
 		author_url = author_container.find("{http://www.w3.org/2005/Atom}uri").text
 		channel_id = feed.find("{http://www.youtube.com/xml/schemas/2015}channelId").text
 		results = []
+		missing_published = False
 		for entry in feed.findall("{http://www.w3.org/2005/Atom}entry"):
 			id = entry.find("{http://www.youtube.com/xml/schemas/2015}videoId").text
 			media_group = entry.find("{http://search.yahoo.com/mrss/}group")
 			description = media_group.find("{http://search.yahoo.com/mrss/}description").text
 			media_community = media_group.find("{http://search.yahoo.com/mrss/}community")
-			published = int(dateutil.parser.isoparse(entry.find("{http://www.w3.org/2005/Atom}published").text).timestamp())
-			results.append({
-				"type": "video",
-				"title": entry.find("{http://www.w3.org/2005/Atom}title").text,
-				"videoId": id,
-				"author": author,
-				"authorId": channel_id,
-				"authorUrl": author_url,
-				"videoThumbnails": generate_video_thumbnails(id),
-				"description": description,
-				"descriptionHtml": add_html_links(escape_html_textcontent(description)),
-				"viewCount": int(media_community.find("{http://search.yahoo.com/mrss/}statistics").attrib["views"]),
-				"published": published,
-				"publishedText": time_to_past_text(published),
-				"lengthSeconds": None,
-				"liveNow": None,
-				"paid": None,
-				"premium": None,
-				"isUpcoming": None
-			})
+			published_entry = entry.find("{http://www.w3.org/2005/Atom}published")
+			if published_entry is not None: # sometimes youtube does not provide published dates, no idea why.
+				published = int(dateutil.parser.isoparse(published_entry.text).timestamp())
+				results.append({
+					"type": "video",
+					"title": entry.find("{http://www.w3.org/2005/Atom}title").text,
+					"videoId": id,
+					"author": author,
+					"authorId": channel_id,
+					"authorUrl": author_url,
+					"videoThumbnails": generate_video_thumbnails(id),
+					"description": description,
+					"descriptionHtml": description and add_html_links(escape_html_textcontent(description)),
+					"viewCount": int(media_community.find("{http://search.yahoo.com/mrss/}statistics").attrib["views"]),
+					"published": published,
+					"publishedText": time_to_past_text(published),
+					"lengthSeconds": None,
+					"liveNow": None,
+					"paid": None,
+					"premium": None,
+					"isUpcoming": None
+				})
+			else:
+				missing_published = True
 
-		with channel_latest_cache_lock:
-			channel_latest_cache[ucid] = results
+		if len(results) == 0 and missing_published: # no results due to all missing published
+			cherrypy.response.status = 503
+			return {
+				"error": "YouTube did not provide published dates for any feed items. This is usually temporary - refresh in a few minutes.",
+				"identifier": "PUBLISHED_DATES_NOT_PROVIDED"
+			}
+		else:
+			with channel_latest_cache_lock:
+				channel_latest_cache[ucid] = results
 
-		return results
+			return results
