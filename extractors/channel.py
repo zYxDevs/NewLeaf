@@ -21,65 +21,73 @@ def extract_channel(ucid):
 	with requests.get("https://www.youtube.com/{}/{}/videos".format(channel_type, ucid)) as r:
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
+
 		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"]
 		author = header["title"]
 		author_id = header["channelId"]
 		author_url = header["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"]
+		subscriber_count = combine_runs(header["subscriberCountText"])
+		description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
+		allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
+
 		author_banners = []
 		if "banner" in header:
 			author_banners = header["banner"]["thumbnails"]
 			for t in author_banners:
 				t["url"] = normalise_url_protocol(t["url"])
+
 		author_thumbnails = []
 		if "avatar" in header:
 			author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
-		subscriber_count = combine_runs(header["subscriberCountText"])
-		description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
-		allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
+
+		latest_videos = []
 		tabs = yt_initial_data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
 		videos_tab = next(tab["tabRenderer"] for tab in tabs if tab["tabRenderer"]["title"] == "Videos")
-		videos = (
-			v["gridVideoRenderer"] for v in
-			videos_tab["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["gridRenderer"]["items"]
-		)
-		latest_videos = []
-		for v in videos:
-			live = True
-			length_text = "LIVE"
-			length_seconds = -1
-			for o in v["thumbnailOverlays"]:
-				if "thumbnailOverlayTimeStatusRenderer" in o:
-					length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
-					if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
-						length_seconds = length_text_to_seconds(length_text)
-						live = False
-			published = 0
-			published_text = "Live now"
-			if "publishedTimeText" in v:
-				published_text = v["publishedTimeText"]["simpleText"]
-				published = past_text_to_time(published_text)
-			latest_videos.append({
-				"type": "video",
-				"title": combine_runs(v["title"]),
-				"videoId": v["videoId"],
-				"author": author,
-				"authorId": author_id,
-				"authorUrl": author_url,
-				"videoThumbnails": generate_video_thumbnails(v["videoId"]),
-				"description": "",
-				"descriptionHtml": "",
-				"viewCount": view_count_text_to_number(combine_runs(v["viewCountText"])),
-				"second__viewCountText": combine_runs(v["viewCountText"]),
-				"second__viewCountTextShort": combine_runs(v["shortViewCountText"]),
-				"published": published,
-				"publishedText": published_text,
-				"lengthSeconds": length_seconds,
-				"second__lengthText": length_text,
-				"liveNow": live,
-				"paid": None,
-				"premium": None,
-				"isUpcoming": None
-			})
+		tab_parts = videos_tab["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]
+
+		# check that the channel actually has videos - this may be replaced
+		# with messageRenderer.text.simpleText == "This channel has no videos."
+		if "gridVideoRenderer" in tab_parts:
+			videos = (
+				v["gridVideoRenderer"] for v in tab_parts["gridRenderer"]["items"]
+			)
+			for v in videos:
+				live = True
+				length_text = "LIVE"
+				length_seconds = -1
+				for o in v["thumbnailOverlays"]:
+					if "thumbnailOverlayTimeStatusRenderer" in o:
+						length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
+						if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
+							length_seconds = length_text_to_seconds(length_text)
+							live = False
+				published = 0
+				published_text = "Live now"
+				if "publishedTimeText" in v:
+					published_text = v["publishedTimeText"]["simpleText"]
+					published = past_text_to_time(published_text)
+				latest_videos.append({
+					"type": "video",
+					"title": combine_runs(v["title"]),
+					"videoId": v["videoId"],
+					"author": author,
+					"authorId": author_id,
+					"authorUrl": author_url,
+					"videoThumbnails": generate_video_thumbnails(v["videoId"]),
+					"description": "",
+					"descriptionHtml": "",
+					"viewCount": view_count_text_to_number(combine_runs(v["viewCountText"])),
+					"second__viewCountText": combine_runs(v["viewCountText"]),
+					"second__viewCountTextShort": combine_runs(v["shortViewCountText"]),
+					"published": published,
+					"publishedText": published_text,
+					"lengthSeconds": length_seconds,
+					"second__lengthText": length_text,
+					"liveNow": live,
+					"paid": None,
+					"premium": None,
+					"isUpcoming": None
+				})
 
 		channel = {
 			"author": author,
