@@ -10,20 +10,17 @@ import json
 import traceback
 import requests
 import xml.etree.ElementTree as ET
-from cachetools import TTLCache
 from extractors.video import extract_video
 from extractors.channel import extract_channel, extract_channel_videos, extract_channel_latest
 from extractors.manifest import extract_manifest
 from extractors.search import extract_search
 from extractors.suggestions import extract_search_suggestions
 
-class Second(object):
-	def __init__(self):
-		self.video_cache = TTLCache(maxsize=50, ttl=300)
-		self.search_cache = TTLCache(maxsize=50, ttl=300)
-		self.search_suggestions_cache = TTLCache(maxsize=200, ttl=60)
-		self.channel_cache = TTLCache(maxsize=50, ttl=300)
+@cherrypy.tools.register("before_finalize", priority=60)
+def custom_headers():
+	cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
 
+class Second(object):
 	def _cp_dispatch(self, vpath):
 		if vpath[:4] == ["api", "manifest", "dash", "id"]:
 			vpath[:4] = ["manifest"]
@@ -110,4 +107,8 @@ class Second(object):
 			return r # no idea if this is a good way to do it, but it definitely works! :D
 
 cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
-cherrypy.quickstart(Second())
+cherrypy.quickstart(Second(), "/", {
+	"/": {
+		"tools.custom_headers.on": True
+	}
+})
