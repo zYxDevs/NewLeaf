@@ -47,7 +47,7 @@ def extract_channel(ucid):
 
 		# check that the channel actually has videos - this may be replaced
 		# with messageRenderer.text.simpleText == "This channel has no videos."
-		if "gridVideoRenderer" in tab_parts:
+		if "gridRenderer" in tab_parts:
 			videos = (
 				v["gridVideoRenderer"] for v in tab_parts["gridRenderer"]["items"]
 			)
