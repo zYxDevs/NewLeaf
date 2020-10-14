@@ -44,7 +44,11 @@ def add_html_links(text):
 	return text
 
 def view_count_text_to_number(text):
-	return int(text.split(" ")[0].replace(",", ""))
+	first_word = text.split(" ")[0].replace(",", "")
+	if first_word == "No":
+		return 0
+	else:
+		return int(first_word)
 
 def get_view_count_or_recommended(view_count_container):
 	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
