@@ -1,7 +1,7 @@
 import re
 import json
 
-r_yt_initial_data = re.compile(r"""^\s*window\["ytInitialData"\] = (\{.*\});\n?$""", re.M)
+r_yt_initial_data = re.compile(r"""^(?:\s*window\["ytInitialData"\]|var ytInitialData) = (\{.*\});\s*\n?$""", re.M)
 
 def extract_yt_initial_data(content):
 	m_yt_initial_data = re.search(r_yt_initial_data, content)
