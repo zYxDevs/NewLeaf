@@ -17,7 +17,7 @@ ytdl = youtube_dl.YoutubeDL(ytdl_opts)
 
 def extract_search(q):
 	try:
-		with requests.get("https://www.youtube.com/results", params={"q": q}) as r:
+		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}) as r:
 			r.raise_for_status()
 			content = r.content.decode("utf8")
 			yt_initial_data = extract_yt_initial_data(content)
