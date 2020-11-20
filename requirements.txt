@@ -2,3 +2,4 @@ cherrypy
 youtube-dl
 cachetools
 python-dateutil
+requests
