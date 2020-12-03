@@ -28,6 +28,11 @@ def get_created_files(id):
 		id = "_" + id[1:] # youtube-dl changes - to _ at the start, presumably to not accidentally trigger switches with * in shell
 	return (f for f in os.listdir() if f.startswith("{}_".format(id)))
 
+def clean_up_temp_files(id):
+	created_files = get_created_files(id)
+	for file in created_files:
+		os.unlink(file)
+
 def format_order(format):
 	# most significant to least significant
 	# key, max, order, transform
@@ -172,6 +177,8 @@ def extract_video(id):
 		return result
 
 	except youtube_dlc.DownloadError as e:
+		clean_up_temp_files(id)
+
 		if isinstance(e.exc_info[1], urllib.error.HTTPError):
 			if e.exc_info[1].code == 429:
 				result = {
@@ -192,9 +199,7 @@ def extract_video(id):
 		print("messed up in original transform.")
 
 	finally:
-		created_files = get_created_files(id)
-		for file in created_files:
-			os.unlink(file)
+		clean_up_temp_files(id)
 		return result
 
 def get_more_stuff_from_file(id, result):
