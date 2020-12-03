@@ -1,7 +1,7 @@
 import configuration
 import cherrypy
 import json
-import youtube_dl
+import youtube_dlc
 import datetime
 import dateutil.parser
 import os

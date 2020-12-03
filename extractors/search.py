@@ -1,6 +1,6 @@
 import requests
 import traceback
-import youtube_dl
+import youtube_dlc
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data
 from cachetools import TTLCache
@@ -13,7 +13,7 @@ ytdl_opts = {
 	"playlist_items": "1-100",
 	"extract_flat": "in_playlist"
 }
-ytdl = youtube_dl.YoutubeDL(ytdl_opts)
+ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
 
 def extract_search(q):
 	try:

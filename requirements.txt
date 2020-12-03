@@ -1,5 +1,5 @@
 cherrypy
-youtube-dl
+youtube-dlc
 cachetools
 python-dateutil
 requests

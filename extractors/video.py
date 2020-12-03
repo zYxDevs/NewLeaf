@@ -4,7 +4,7 @@ import json
 import os
 import re
 import traceback
-import youtube_dl
+import youtube_dlc
 import urllib.error
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data
@@ -21,7 +21,7 @@ ytdl_opts = {
 	"write_pages": True,
         "source_address": "0.0.0.0"
 }
-ytdl = youtube_dl.YoutubeDL(ytdl_opts)
+ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
 
 def get_created_files(id):
 	if id[0] == "-":
@@ -171,7 +171,7 @@ def extract_video(id):
 
 		return result
 
-	except youtube_dl.DownloadError as e:
+	except youtube_dlc.DownloadError as e:
 		if isinstance(e.exc_info[1], urllib.error.HTTPError):
 			if e.exc_info[1].code == 429:
 				result = {
