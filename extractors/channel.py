@@ -127,7 +127,13 @@ def extract_channel_latest(ucid):
 			return channel_latest_cache[ucid]
 
 	with requests.get("https://www.youtube.com/feeds/videos.xml?channel_id={}".format(ucid)) as r:
-		r.raise_for_status()
+		if r.status_code == 404:
+			cherrypy.response.status = 404
+			return {
+				"error": "Channel does not exist.",
+				"identifier": "NOT_FOUND"
+			}
+
 		feed = ET.fromstring(r.content)
 		author_container = feed.find("{http://www.w3.org/2005/Atom}author")
 		author = author_container.find("{http://www.w3.org/2005/Atom}name").text
@@ -171,8 +177,8 @@ def extract_channel_latest(ucid):
 				"error": "YouTube did not provide published dates for any feed items. This is usually temporary - refresh in a few minutes.",
 				"identifier": "PUBLISHED_DATES_NOT_PROVIDED"
 			}
-		else:
-			with channel_latest_cache_lock:
-				channel_latest_cache[ucid] = results
 
-			return results
+		with channel_latest_cache_lock:
+			channel_latest_cache[ucid] = results
+
+		return results
