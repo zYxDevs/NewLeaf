@@ -128,6 +128,8 @@ def normalise_url_protocol(url):
 	return url
 
 def uncompress_counter(text):
+	if text.lower() == "no" or text.lower() == "unknown":
+		return 0
 	last = text[-1:].lower()
 	if last >= "0" and last <= "9":
 		return int(last)

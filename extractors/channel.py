@@ -26,7 +26,7 @@ def extract_channel(ucid):
 		author = header["title"]
 		author_id = header["channelId"]
 		author_url = header["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"]
-		subscriber_count = combine_runs(header["subscriberCountText"])
+		subscriber_count = combine_runs(header["subscriberCountText"]) if "subscribeCountText" in header else "Unknown subscribers"
 		description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
 		allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
 
