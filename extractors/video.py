@@ -7,7 +7,7 @@ import traceback
 import youtube_dlc
 import urllib.error
 from tools.converters import *
-from tools.extractors import extract_yt_initial_data
+from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response
 from math import floor
 from cachetools import TTLCache
 
@@ -19,7 +19,7 @@ ytdl_opts = {
 	"playlist_items": "1-100",
 	"extract_flat": "in_playlist",
 	"write_pages": True,
-        "source_address": "0.0.0.0"
+	"source_address": "0.0.0.0"
 }
 ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
 
@@ -255,39 +255,41 @@ def get_more_stuff_from_file(id, result):
 					"second__liveNow": is_live(r)
 				} for r in [get_useful_recommendation_data(r) for r in recommendations if get_useful_recommendation_data(r)])
 
-				m_yt_player_config = re.search(r_yt_player_config, content)
-				if m_yt_player_config:
-					yt_player_config = json.loads(m_yt_player_config.group(1))
-					player_response = json.loads(yt_player_config["args"]["player_response"])
-					if "dashManifestUrl" in player_response["streamingData"]:
-						result["second__providedDashUrl"] = player_response["streamingData"]["dashManifestUrl"]
-					result["liveNow"] = player_response["videoDetails"]["isLiveContent"]
+				# m_yt_player_config = re.search(r_yt_player_config, content)
+				# if m_yt_player_config:
+					# yt_player_config = json.loads(m_yt_player_config.group(1))
 
-					# result = player_response
-					# return result
+				player_response = extract_yt_initial_player_response(content)
 
-					itagDict = {}
-					for f in player_response["streamingData"]["adaptiveFormats"]:
-						if "indexRange" in f:
-							itagDict[str(f["itag"])] = {
-								"initRange": f["initRange"],
-								"indexRange": f["indexRange"],
-								"audioChannels": f["audioChannels"] if "audioChannels" in f else None
-							}
-					for f in result["adaptiveFormats"]:
-						if f["itag"] in itagDict:
-							i = itagDict[f["itag"]]
-							f["init"] = "{}-{}".format(i["initRange"]["start"], i["initRange"]["end"])
-							f["index"] = "{}-{}".format(i["indexRange"]["start"], i["indexRange"]["end"])
-							f["second__audioChannels"] = i["audioChannels"]
-							if f["second__height"]:
-								resolution = str(f["second__height"]) + "p"
-								f["resolution"] = resolution
-								label = resolution
-								if f["fps"] > 30:
-									label += str(f["fps"])
-								f["qualityLabel"] = label
-							f["second__order"] = format_order(f)
+				# result = player_response
+				# return result
+
+				if "dashManifestUrl" in player_response["streamingData"]:
+					result["second__providedDashUrl"] = player_response["streamingData"]["dashManifestUrl"]
+				result["liveNow"] = player_response["videoDetails"]["isLiveContent"]
+
+				itagDict = {}
+				for f in player_response["streamingData"]["adaptiveFormats"]:
+					if "indexRange" in f:
+						itagDict[str(f["itag"])] = {
+							"initRange": f["initRange"],
+							"indexRange": f["indexRange"],
+							"audioChannels": f["audioChannels"] if "audioChannels" in f else None
+						}
+				for f in result["adaptiveFormats"]:
+					if f["itag"] in itagDict:
+						i = itagDict[f["itag"]]
+						f["init"] = "{}-{}".format(i["initRange"]["start"], i["initRange"]["end"])
+						f["index"] = "{}-{}".format(i["indexRange"]["start"], i["indexRange"]["end"])
+						f["second__audioChannels"] = i["audioChannels"]
+						if f["second__height"]:
+							resolution = str(f["second__height"]) + "p"
+							f["resolution"] = resolution
+							label = resolution
+							if f["fps"] > 30:
+								label += str(f["fps"])
+							f["qualityLabel"] = label
+						f["second__order"] = format_order(f)
 
 	except Exception:
 		print("messed up extracting recommendations.")
