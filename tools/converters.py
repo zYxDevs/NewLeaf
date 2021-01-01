@@ -51,7 +51,13 @@ def view_count_text_to_number(text):
 		return int(first_word)
 
 def get_view_count_or_recommended(view_count_container):
-	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
+	if "viewCountText" in view_count_container:
+		text = view_count_container["viewCountText"]
+	elif "viewCount" in view_count_container:
+		text = view_count_container["viewCount"]
+	else:
+		return 0
+
 	if "runs" in text: # has live viewers
 		return view_count_text_to_number(combine_runs(text))
 	else:
@@ -62,7 +68,13 @@ def get_view_count_or_recommended(view_count_container):
 			return view_count_text_to_number(text)
 
 def get_view_count_text_or_recommended(view_count_container):
-	text = view_count_container.get("viewCountText") or view_count_container["viewCount"]
+	if "viewCountText" in view_count_container:
+		text = view_count_container["viewCountText"]
+	elif "viewCount" in view_count_container:
+		text = view_count_container["viewCount"]
+	else:
+		return None
+
 	if "runs" in text: # has live viewers
 		return combine_runs(text)
 	else: # has past views
