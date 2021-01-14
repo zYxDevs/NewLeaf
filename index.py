@@ -1,15 +1,7 @@
-import configuration
 import cherrypy
 import json
-import youtube_dlc
-import datetime
-import dateutil.parser
-import os
-import re
-import json
-import traceback
 import requests
-import xml.etree.ElementTree as ET
+import youtube_dlc
 from extractors.video import extract_video
 from extractors.channel import extract_channel, extract_channel_videos, extract_channel_latest
 from extractors.manifest import extract_manifest
@@ -105,6 +97,13 @@ class Second(object):
 			r.raise_for_status()
 			cherrypy.response.headers["content-type"] = r.headers["content-type"]
 			return r # no idea if this is a good way to do it, but it definitely works! :D
+
+	@cherrypy.expose
+	def ggpht(self, *path):
+		with requests.get("https://yt3.ggpht.com/{}".format("/".join(path))) as r:
+			cherrypy.response.headers["content-type"] = r.headers["content-type"]
+			r.raise_for_status()
+			return r
 
 cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
 cherrypy.quickstart(Second(), "/", {
