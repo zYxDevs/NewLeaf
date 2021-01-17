@@ -44,6 +44,9 @@ def add_html_links(text):
 	return text
 
 def view_count_text_to_number(text):
+	if text is None:
+		return 0
+
 	first_word = text.split(" ")[0].replace(",", "")
 	if first_word == "No":
 		return 0

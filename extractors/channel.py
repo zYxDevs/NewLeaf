@@ -22,13 +22,21 @@ def extract_channel(ucid):
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 
-		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"]
-		author = header["title"]
-		author_id = header["channelId"]
-		author_url = header["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"]
+		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"] if "c4TabbedHeaderRenderer" in yt_initial_data["header"] else []
+		channel_metadata = yt_initial_data["metadata"]["channelMetadataRenderer"]
+
+		if header:
+			author = header["title"]
+			author_id = header["channelId"]
+			author_url = header["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"]
+		else:
+			author = channel_metadata["title"]
+			author_id = channel_metadata["externalId"]
+			author_url = channel_metadata["channelUrl"]
+			
 		subscriber_count = combine_runs(header["subscriberCountText"]) if "subscribeCountText" in header else "Unknown subscribers"
-		description = yt_initial_data["metadata"]["channelMetadataRenderer"]["description"]
-		allowed_regions = yt_initial_data["metadata"]["channelMetadataRenderer"]["availableCountryCodes"]
+		description = channel_metadata["description"]
+		allowed_regions = channel_metadata["availableCountryCodes"]
 
 		author_banners = []
 		if "banner" in header:
@@ -39,6 +47,8 @@ def extract_channel(ucid):
 		author_thumbnails = []
 		if "avatar" in header:
 			author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
+		elif "avatar" in channel_metadata:
+			author_thumbnails = generate_full_author_thumbnails(channel_metadata["avatar"]["thumbnails"])
 
 		latest_videos = []
 		tabs = yt_initial_data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
@@ -66,6 +76,10 @@ def extract_channel(ucid):
 				if "publishedTimeText" in v:
 					published_text = v["publishedTimeText"]["simpleText"]
 					published = past_text_to_time(published_text)
+
+				view_count_text = combine_runs(v["viewCountText"]) if "viewCountText" in v else None
+				view_count_text_short = combine_runs(v["shortViewCountText"]) if "shortViewCountText" in v else None
+
 				latest_videos.append({
 					"type": "video",
 					"title": combine_runs(v["title"]),
@@ -76,9 +90,9 @@ def extract_channel(ucid):
 					"videoThumbnails": generate_video_thumbnails(v["videoId"]),
 					"description": "",
 					"descriptionHtml": "",
-					"viewCount": view_count_text_to_number(combine_runs(v["viewCountText"])),
-					"second__viewCountText": combine_runs(v["viewCountText"]),
-					"second__viewCountTextShort": combine_runs(v["shortViewCountText"]),
+					"viewCount": view_count_text_to_number(view_count_text),
+					"second__viewCountText": view_count_text,
+					"second__viewCountTextShort": view_count_text_short,
 					"published": published,
 					"publishedText": published_text,
 					"lengthSeconds": length_seconds,
