@@ -22,7 +22,7 @@ def extract_channel(ucid):
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 
-		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"] if "c4TabbedHeaderRenderer" in yt_initial_data["header"] else []
+		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"] if "c4TabbedHeaderRenderer" in yt_initial_data["header"] else {}
 		channel_metadata = yt_initial_data["metadata"]["channelMetadataRenderer"]
 
 		if header:
@@ -45,10 +45,9 @@ def extract_channel(ucid):
 				t["url"] = normalise_url_protocol(t["url"])
 
 		author_thumbnails = []
-		if "avatar" in header:
-			author_thumbnails = generate_full_author_thumbnails(header["avatar"]["thumbnails"])
-		elif "avatar" in channel_metadata:
-			author_thumbnails = generate_full_author_thumbnails(channel_metadata["avatar"]["thumbnails"])
+		avatar = header.get("avatar") or channel_metadata.get("avatar")
+		if avatar:
+			author_thumbnails = generate_full_author_thumbnails(avatar["thumbnails"])
 
 		latest_videos = []
 		tabs = yt_initial_data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
