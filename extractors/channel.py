@@ -33,8 +33,8 @@ def extract_channel(ucid):
 			author = channel_metadata["title"]
 			author_id = channel_metadata["externalId"]
 			author_url = channel_metadata["channelUrl"]
-			
-		subscriber_count = combine_runs(header["subscriberCountText"]) if "subscribeCountText" in header else "Unknown subscribers"
+
+		subscriber_count = combine_runs(header["subscriberCountText"]) if "subscriberCountText" in header else "Unknown subscribers"
 		description = channel_metadata["description"]
 		allowed_regions = channel_metadata["availableCountryCodes"]
 
