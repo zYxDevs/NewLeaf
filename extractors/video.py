@@ -19,7 +19,9 @@ ytdl_opts = {
 	"playlist_items": "1-100",
 	"extract_flat": "in_playlist",
 	"write_pages": True,
-	"source_address": "0.0.0.0"
+	"source_address": "0.0.0.0",
+	"writesubtitles": True,
+	"allsubtitles": True,
 }
 ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
 
@@ -171,6 +173,23 @@ def extract_video(id):
 					"second__width": format["width"],
 					"second__height": format["height"]
 				})
+		
+		if "requested_subtitles" in info and info["requested_subtitles"]:
+
+			for language_code, subtitle in info["requested_subtitles"].items():
+				
+				if language_code != "live_chat":
+					subtitle_url = subtitle["url"]
+					label = get_language_label_from_url(subtitle_url)
+					subtitle_api_url = get_subtitle_api_url(id, label, language_code)
+
+					result["captions"].append({
+						"label": label if label != "" else language_code,
+						"languageCode": language_code,
+						"url": subtitle_api_url,
+						"second__subtitleUrl": subtitle_url # Direct YouTube url
+					})
+
 
 		result = get_more_stuff_from_file(info["id"], result)
 

@@ -7,6 +7,7 @@ from extractors.channel import extract_channel, extract_channel_videos, extract_
 from extractors.manifest import extract_manifest
 from extractors.search import extract_search
 from extractors.suggestions import extract_search_suggestions
+from extractors.captions import extract_captions
 
 @cherrypy.tools.register("before_finalize", priority=60)
 def custom_headers():
@@ -22,7 +23,8 @@ class Second(object):
 			endpoints = [
 				["channels", 1, 2],
 				["videos", 1, 1],
-				["search", 0, 1]
+				["search", 0, 1],
+				["captions", 1, 1]
 			]
 			for e in endpoints:
 				if vpath[2] == e[0] and len(vpath) >= e[1]+3 and len(vpath) <= e[2]+3:
@@ -90,6 +92,17 @@ class Second(object):
 	@cherrypy.tools.json_out()
 	def suggestions(self, *, q, **kwargs):
 		return extract_search_suggestions(q)
+	
+	@cherrypy.expose
+	def captions(self, id, **kwargs):
+		result = extract_captions(id, **kwargs)
+		if type(result) is dict:
+			cherrypy.response.headers["content-type"] = "application/json"
+			return bytes(json.dumps(result), "utf8")
+		else:
+			cherrypy.response.headers["content-type"] = "text/vtt; charset=UTF-8"
+			return result
+
 
 	@cherrypy.expose
 	def vi(self, id, file):
