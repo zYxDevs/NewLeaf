@@ -101,8 +101,8 @@ class Second(object):
 	@cherrypy.expose
 	def ggpht(self, *path):
 		with requests.get("https://yt3.ggpht.com/{}".format("/".join(path))) as r:
-			cherrypy.response.headers["content-type"] = r.headers["content-type"]
 			r.raise_for_status()
+			cherrypy.response.headers["content-type"] = r.headers["content-type"]
 			return r
 
 cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
