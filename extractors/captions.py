@@ -10,24 +10,14 @@ def extract_captions(id, **kwargs):
 
 # Return captions for the language specified,
 # The captions list otherwise
-def extract_captions_from_dict(captions, **kwargs):
-	lang = None
-	label = None
-
-	if "lang" in kwargs:
-		lang = kwargs["lang"]
-	elif "label" in kwargs:
-		label = kwargs["label"]
-	else:
+def extract_captions_from_dict(captions, *, lang=None, label=None):
+	if lang is None and label is None:
 		return captions
 
-	for subtitle in captions["captions"]:
-		if lang == subtitle["languageCode"] or label == subtitle["label"]:
-			url = subtitle["second__subtitleUrl"]
-
-			with requests.get(url) as r:
-				r.raise_for_status()
-				return r.content.decode("utf8")
+	url = next(caption["second__remoteUrl"] for caption in captions["captions"] if caption["languageCode"] == lang or caption["label"] == label)
+	with requests.get(url) as r:
+		r.raise_for_status()
+		return r
 
 # Currently unused in favour of extract_captions_from_api.
 def extract_captions_from_video(id):
@@ -67,7 +57,7 @@ def extract_captions_from_api(id):
 				"label": label if label != "" else language_code,
 				"languageCode": language_code,
 				"url": subtitle_api_url,
-				"second__subtitleUrl": subtitle_url
+				"second__remoteUrl": subtitle_url
 			})
 
 		return result
