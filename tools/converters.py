@@ -2,7 +2,7 @@ import configuration
 import datetime
 import re
 import time
-from urllib.parse import urlparse, parse_qs, quote_plus
+from urllib.parse import urlparse, urlencode, parse_qs
 
 def length_text_to_seconds(text):
 	s = text.split(":")
@@ -214,12 +214,12 @@ def get_language_label_from_url(url_string):
 	return label
 
 def get_subtitle_api_url(id, label, language_code):
-	subtitle_api_url = "{}/api/v1/captions/{}?".format(configuration.website_origin, id)
+	subtitle_api_url = "/api/v1/captions/{}?".format(id)
+	params = {}
 
-	if label == "":
-		label = language_code
-		subtitle_api_url += "lang=" + quote_plus(language_code)
+	if label:
+		params["label"] = label
 	else:
-		subtitle_api_url += "label=" + quote_plus(label)
+		params["lang"] = language_code
 
-	return subtitle_api_url
+	return subtitle_api_url + urlencode(params)
