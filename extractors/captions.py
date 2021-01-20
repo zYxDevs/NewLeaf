@@ -29,6 +29,12 @@ def extract_captions_from_video(id):
 def extract_captions_from_api(id):
 	url = "https://video.google.com/timedtext?hl=en&type=list&v=%s" % id
 	with requests.get(url) as r:
+		if r.status_code == 404:
+			return {
+				"error": "Video unavailable",
+				"identifier": "NOT_FOUND"
+			}
+
 		r.raise_for_status()
 
 		transcript = ET.fromstring(r.content.decode("utf8"))

@@ -92,17 +92,25 @@ class Second(object):
 	@cherrypy.tools.json_out()
 	def suggestions(self, *, q, **kwargs):
 		return extract_search_suggestions(q)
-	
+
 	@cherrypy.expose
 	def captions(self, id, **kwargs):
-		result = extract_captions(id, **kwargs)
-		if type(result) is dict:
-			cherrypy.response.headers["content-type"] = "application/json"
-			return bytes(json.dumps(result), "utf8")
-		else:
-			cherrypy.response.headers["content-type"] = "text/vtt; charset=UTF-8"
-			return result
+		try:
+			result = extract_captions(id, **kwargs)
+			if type(result) is dict:
+				cherrypy.response.headers["content-type"] = "application/json"
+				return bytes(json.dumps(result), "utf8")
+			else:
+				cherrypy.response.headers["content-type"] = "text/vtt; charset=UTF-8"
+				return result
 
+		except StopIteration:
+			cherrypy.response.status = "400"
+			cherrypy.response.headers["content-type"] = "application/json"
+			return bytes(json.dumps({
+				"error": "No captions matching that language or label",
+				"identifier": "NO_MATCHING_CAPTIONS"
+			}), "utf8")
 
 	@cherrypy.expose
 	def vi(self, id, file):
