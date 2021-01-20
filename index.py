@@ -11,7 +11,7 @@ from extractors.captions import extract_captions
 
 @cherrypy.tools.register("before_finalize", priority=60)
 def custom_headers():
-	cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
+	cherrypy.response.headers["access-control-allow-origin"] = "*"
 
 class Second(object):
 	def _cp_dispatch(self, vpath):
