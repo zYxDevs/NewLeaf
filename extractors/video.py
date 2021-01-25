@@ -8,6 +8,7 @@ import youtube_dlc
 import urllib.error
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response
+import tools.files as files
 from math import floor
 from cachetools import TTLCache
 
@@ -24,16 +25,6 @@ ytdl_opts = {
 	"allsubtitles": True,
 }
 ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
-
-def get_created_files(id):
-	if id[0] == "-":
-		id = "_" + id[1:] # youtube-dl changes - to _ at the start, presumably to not accidentally trigger switches with * in shell
-	return (f for f in os.listdir() if f.startswith("{}_".format(id)))
-
-def clean_up_temp_files(id):
-	created_files = get_created_files(id)
-	for file in created_files:
-		os.unlink(file)
 
 def format_order(format):
 	# most significant to least significant
@@ -195,7 +186,7 @@ def extract_video(id):
 		return result
 
 	except youtube_dlc.DownloadError as e:
-		clean_up_temp_files(id)
+		files.clean_up_temp_files(id)
 
 		if isinstance(e.exc_info[1], urllib.error.HTTPError):
 			if e.exc_info[1].code == 429:
@@ -217,13 +208,13 @@ def extract_video(id):
 		print("messed up in original transform.")
 
 	finally:
-		clean_up_temp_files(id)
+		files.clean_up_temp_files(id)
 		return result
 
 def get_more_stuff_from_file(id, result):
 	# Figure out what the name of the saved file was
 	recommendations = []
-	created_files = get_created_files(id)
+	created_files = files.get_created_files(id)
 	possible_files = [f for f in created_files if f[11:].startswith("_https_-_www.youtube.com")]
 	try:
 		if len(possible_files) == 1:
