@@ -13,7 +13,7 @@ from extractors.captions import extract_captions
 def custom_headers():
 	cherrypy.response.headers["access-control-allow-origin"] = "*"
 
-class Second(object):
+class NewLeaf(object):
 	def _cp_dispatch(self, vpath):
 		if vpath[:4] == ["api", "manifest", "dash", "id"]:
 			vpath[:4] = ["manifest"]
@@ -127,7 +127,7 @@ class Second(object):
 			return r
 
 cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
-cherrypy.quickstart(Second(), "/", {
+cherrypy.quickstart(NewLeaf(), "/", {
 	"/": {
 		"tools.custom_headers.on": True
 	}
