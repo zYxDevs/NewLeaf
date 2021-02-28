@@ -8,6 +8,7 @@ from extractors.manifest import extract_manifest
 from extractors.search import extract_search
 from extractors.suggestions import extract_search_suggestions
 from extractors.captions import extract_captions
+import configuration
 
 @cherrypy.tools.register("before_finalize", priority=60)
 def custom_headers():
@@ -126,7 +127,10 @@ class NewLeaf(object):
 			cherrypy.response.headers["content-type"] = r.headers["content-type"]
 			return r
 
-cherrypy.config.update({"server.socket_port": 3000, "server.socket_host": "0.0.0.0"})
+bind_port = getattr(configuration, "bind_port", 3000)
+bind_host = getattr(configuration, "bind_host", "0.0.0.0")
+
+cherrypy.config.update({"server.socket_port": bind_port, "server.socket_host": bind_host})
 cherrypy.quickstart(NewLeaf(), "/", {
 	"/": {
 		"tools.custom_headers.on": True
