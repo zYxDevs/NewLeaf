@@ -3,6 +3,7 @@
 \#*#
 .vscode
 .idea
+.git
 
 # Artifacts
 __pycache__
