@@ -18,7 +18,7 @@ def extract_channel(ucid):
 			return channel_cache[ucid]
 
 	channel_type = "channel" if len(ucid) == 24 and ucid[:2] == "UC" else "user"
-	with requests.get("https://www.youtube.com/{}/{}/videos?hl=en".format(channel_type, ucid)) as r:
+	with requests.get("https://www.youtube.com/{}/{}/videos?hl=en".format(channel_type, ucid), cookies={"CONSENT": "YES+cb.20210328-17-p0.en+FX+101"}) as r:
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 

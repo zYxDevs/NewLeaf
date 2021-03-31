@@ -1,6 +1,6 @@
 import requests
 import traceback
-import youtube_dlc
+import yt_dlp
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data
 from cachetools import TTLCache
@@ -13,11 +13,11 @@ ytdl_opts = {
 	"playlist_items": "1-100",
 	"extract_flat": "in_playlist"
 }
-ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
+ytdl = yt_dlp.YoutubeDL(ytdl_opts)
 
 def extract_search(q):
 	try:
-		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}) as r:
+		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}, cookies={"CONSENT": "YES+cb.20210328-17-p0.en+FX+101"}) as r:
 			r.raise_for_status()
 			content = r.content.decode("utf8")
 			yt_initial_data = extract_yt_initial_data(content)

@@ -2,7 +2,7 @@ import cherrypy
 import json
 import pathlib
 import requests
-import youtube_dlc
+import yt_dlp
 from extractors.video import extract_video
 from extractors.channel import extract_channel, extract_channel_videos, extract_channel_latest
 from extractors.manifest import extract_manifest

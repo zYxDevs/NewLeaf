@@ -4,7 +4,7 @@ import json
 import os
 import re
 import traceback
-import youtube_dlc
+import yt_dlp
 import urllib.error
 from tools.converters import *
 from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response
@@ -24,7 +24,7 @@ ytdl_opts = {
 	"writesubtitles": True,
 	"allsubtitles": True,
 }
-ytdl = youtube_dlc.YoutubeDL(ytdl_opts)
+ytdl = yt_dlp.YoutubeDL(ytdl_opts)
 
 def format_order(format):
 	# most significant to least significant
@@ -185,7 +185,7 @@ def extract_video(id):
 
 		return result
 
-	except youtube_dlc.DownloadError as e:
+	except yt_dlp.DownloadError as e:
 		files.clean_up_temp_files(id)
 
 		if isinstance(e.exc_info[1], urllib.error.HTTPError):
