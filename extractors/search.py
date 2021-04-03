@@ -17,7 +17,7 @@ ytdl = yt_dlp.YoutubeDL(ytdl_opts)
 
 def extract_search(q):
 	try:
-		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}, cookies={"CONSENT": "YES+cb.20210328-17-p0.en+FX+101"}) as r:
+		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}, cookies={"CONSENT": "PENDING+999"}) as r:
 			r.raise_for_status()
 			content = r.content.decode("utf8")
 			yt_initial_data = extract_yt_initial_data(content)
