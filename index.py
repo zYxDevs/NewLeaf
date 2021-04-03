@@ -1,5 +1,6 @@
 import cherrypy
 import json
+import pathlib
 import requests
 import youtube_dlc
 from extractors.video import extract_video
@@ -129,10 +130,14 @@ class NewLeaf(object):
 
 bind_port = getattr(configuration, "bind_port", 3000)
 bind_host = getattr(configuration, "bind_host", "0.0.0.0")
+server_root = pathlib.Path(__file__).parent.joinpath("root")
 
 cherrypy.config.update({"server.socket_port": bind_port, "server.socket_host": bind_host})
 cherrypy.quickstart(NewLeaf(), "/", {
 	"/": {
-		"tools.custom_headers.on": True
+		"tools.custom_headers.on": True,
+		"tools.staticdir.on": True,
+		"tools.staticdir.dir": str(server_root.absolute()),
+		"tools.staticdir.index": "index.html"
 	}
 })
