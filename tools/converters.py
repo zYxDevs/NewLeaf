@@ -217,7 +217,7 @@ def get_subtitle_api_url(id, label, language_code):
 	subtitle_api_url = "/api/v1/captions/{}?".format(id)
 	params = {}
 
-	if label:
+	if label and "auto-generated" in label:
 		params["label"] = label
 	else:
 		params["lang"] = language_code

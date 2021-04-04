@@ -5,7 +5,10 @@ from urllib.parse import urlencode
 import xml.etree.ElementTree as ET
 
 def extract_captions(id, **kwargs):
-	captions = extract_captions_from_api(id)
+	if "label" in kwargs and "auto-generated" in kwargs["label"]:
+		captions = extract_captions_from_video(id)
+	else:
+		captions = extract_captions_from_api(id)
 	return extract_captions_from_dict(captions, **kwargs)
 
 # Return captions for the language specified,
@@ -19,15 +22,9 @@ def extract_captions_from_dict(captions, *, lang=None, label=None):
 		r.raise_for_status()
 		return r
 
-# Currently unused in favour of extract_captions_from_api.
-def extract_captions_from_video(id):
-	return {
-		"captions": extract_video(id)["captions"]
-	}
-
-# no automatic captions
+# List of captions directly from youtube, but no automatic
 def extract_captions_from_api(id):
-	url = "https://video.google.com/timedtext?hl=en&type=list&v=%s" % id
+	url = "https://video.google.com/timedtext?hl=en&type=list&v={}".format(id)
 	with requests.get(url) as r:
 		if r.status_code == 404:
 			return {
@@ -67,3 +64,9 @@ def extract_captions_from_api(id):
 			})
 
 		return result
+
+# We'll fall back to this function for auto-captions.
+def extract_captions_from_video(id):
+	return {
+		"captions": extract_video(id)["captions"]
+	}

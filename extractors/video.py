@@ -10,6 +10,7 @@ from tools.converters import *
 from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response
 import tools.files as files
 from math import floor
+from urllib.parse import parse_qs, urlparse, urlencode
 from cachetools import TTLCache
 
 video_cache = TTLCache(maxsize=50, ttl=300)
@@ -165,22 +166,6 @@ def extract_video(id):
 					"second__height": format["height"]
 				})
 
-		if info.get("requested_subtitles"):
-			for language_code, subtitle in info["requested_subtitles"].items():
-				if language_code == "live_chat":
-					continue
-
-				subtitle_url = subtitle["url"]
-				label = get_language_label_from_url(subtitle_url)
-				subtitle_api_url = get_subtitle_api_url(id, label, language_code)
-				result["captions"].append({
-					"label": label if label != "" else language_code,
-					"languageCode": language_code,
-					"url": subtitle_api_url,
-					"second__subtitleUrl": subtitle_url # Direct YouTube url
-				})
-
-
 		result = get_more_stuff_from_file(info["id"], result)
 
 		return result
@@ -299,6 +284,27 @@ def get_more_stuff_from_file(id, result):
 								label += str(f["fps"])
 							f["qualityLabel"] = label
 						f["second__order"] = format_order(f)
+
+				for track in player_response["captions"]["playerCaptionsTracklistRenderer"]["captionTracks"]:
+					# safely editing the track format by taking apart the url...
+					url = track["baseUrl"]
+					parts = urlparse(url)
+					qs = parse_qs(parts.query)
+					qs["format"] = ["vtt"]
+					qs = urlencode(qs, doseq=True)
+					# ...and putting it back together...
+					parts = parts._replace(query=qs)
+					url = parts.geturl()
+					# now make the caption object
+					label = combine_runs(track["name"])
+					language_code = track["languageCode"]
+					subtitle_api_url = get_subtitle_api_url(id, label, language_code)
+					result["captions"].append({
+						"label": label,
+						"languageCode": language_code,
+						"url": subtitle_api_url,
+						"second__remoteUrl": url
+					})
 
 	except Exception:
 		print("messed up extracting recommendations.")
