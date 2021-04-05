@@ -1,3 +1,4 @@
+import re
 import requests
 from extractors.video import extract_video
 from tools.converters import escape_html_textcontent, get_subtitle_api_url
@@ -20,6 +21,9 @@ def extract_captions_from_dict(captions, *, lang=None, label=None):
 	url = next(caption["second__remoteUrl"] for caption in captions["captions"] if caption["languageCode"] == lang or caption["label"] == label)
 	with requests.get(url) as r:
 		r.raise_for_status()
+		# remove extraneous " align:start position:0%" on timestamps lines on auto-generated captions
+		if (lang and "auto-generated" in lang) or (label and "auto-generated" in label):
+			return re.sub(r"^([0-9:.]+ --> [0-9:.]+).*$", r"\1", r.content.decode("utf8"), flags=re.MULTILINE)
 		return r
 
 # List of captions directly from youtube, but no automatic
