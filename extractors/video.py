@@ -285,26 +285,27 @@ def get_more_stuff_from_file(id, result):
 							f["qualityLabel"] = label
 						f["second__order"] = format_order(f)
 
-				for track in player_response["captions"]["playerCaptionsTracklistRenderer"]["captionTracks"]:
-					# safely editing the track format by taking apart the url...
-					url = track["baseUrl"]
-					parts = urlparse(url)
-					qs = parse_qs(parts.query)
-					qs["format"] = ["vtt"]
-					qs = urlencode(qs, doseq=True)
-					# ...and putting it back together...
-					parts = parts._replace(query=qs)
-					url = parts.geturl()
-					# now make the caption object
-					label = combine_runs(track["name"])
-					language_code = track["languageCode"]
-					subtitle_api_url = get_subtitle_api_url(id, label, language_code)
-					result["captions"].append({
-						"label": label,
-						"languageCode": language_code,
-						"url": subtitle_api_url,
-						"second__remoteUrl": url
-					})
+				if "captions" in player_response:
+					for track in player_response["captions"]["playerCaptionsTracklistRenderer"]["captionTracks"]:
+						# safely editing the track format by taking apart the url...
+						url = track["baseUrl"]
+						parts = urlparse(url)
+						qs = parse_qs(parts.query)
+						qs["format"] = ["vtt"]
+						qs = urlencode(qs, doseq=True)
+						# ...and putting it back together...
+						parts = parts._replace(query=qs)
+						url = parts.geturl()
+						# now make the caption object
+						label = combine_runs(track["name"])
+						language_code = track["languageCode"]
+						subtitle_api_url = get_subtitle_api_url(id, label, language_code)
+						result["captions"].append({
+							"label": label,
+							"languageCode": language_code,
+							"url": subtitle_api_url,
+							"second__remoteUrl": url
+						})
 
 	except Exception:
 		print("messed up extracting recommendations.")
