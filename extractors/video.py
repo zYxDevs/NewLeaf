@@ -185,7 +185,7 @@ def extract_video(id):
 				}
 		else:
 			result = {
-				"error": "Unknown download error."
+				"error": "Unknown download error: {}".format(e.exc_info[1])
 			}
 
 	except Exception:
