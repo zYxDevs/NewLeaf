@@ -184,8 +184,13 @@ def extract_video(id):
 					"error": "Received unexpected status code {}.".format(e.exc_info[1].code)
 				}
 		else:
+			if e.exc_info and e.exc_info[1]:
+				message = str(e.exc_info[1])
+				message = message.replace("Video unavailable\n", "") # Remove redundant lead string, if present
+			else:
+				message = "Unknown extraction error."
 			result = {
-				"error": "Unknown download error: {}".format(e.exc_info[1])
+				"error": message
 			}
 
 	except Exception:
