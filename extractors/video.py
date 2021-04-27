@@ -189,6 +189,10 @@ def extract_video(id):
 				message = message.replace("Video unavailable\n", "") # Remove redundant lead string, if present
 			else:
 				message = "Unknown extraction error."
+
+			if "is not a valid URL." in message:
+				message = "Not a valid video ID."
+
 			result = {
 				"error": message
 			}
