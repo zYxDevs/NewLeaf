@@ -22,6 +22,16 @@ def extract_channel(ucid):
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 
+		for alert in yt_initial_data.get("alerts", []):
+			alert_text = combine_runs(alert["alertRenderer"]["text"])
+			if alert_text == "This channel does not exist.":
+				return {
+					"error": alert_text,
+					"identifier": "NOT_FOUND"
+				}
+			else:
+				print("Seen alert text '{}'".format(alert_text))
+
 		header = yt_initial_data["header"]["c4TabbedHeaderRenderer"] if "c4TabbedHeaderRenderer" in yt_initial_data["header"] else {}
 		channel_metadata = yt_initial_data["metadata"]["channelMetadataRenderer"]
 
@@ -146,7 +156,7 @@ def extract_channel_latest(ucid):
 		if r.status_code == 404:
 			cherrypy.response.status = 404
 			return {
-				"error": "Channel does not exist.",
+				"error": "This channel does not exist.",
 				"identifier": "NOT_FOUND"
 			}
 
