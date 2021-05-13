@@ -21,10 +21,15 @@ def extract_search(q):
 			r.raise_for_status()
 			content = r.content.decode("utf8")
 			yt_initial_data = extract_yt_initial_data(content)
+
 			sections = yt_initial_data["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"]["sectionListRenderer"]["contents"]
-			# find the section with the videos, not the one with the ads
-			section = next(s for s in sections if "itemSectionRenderer" in s and not (len(s["itemSectionRenderer"]["contents"]) >= 1 and "carouselAdRenderer" in s["itemSectionRenderer"]["contents"][0]))
-			items = section["itemSectionRenderer"]["contents"]
+			# youtube searches contain a lot of random stuff, just grab it all for now, then filter to `videoRenderer` later
+			itemSections = [s for s in sections if "itemSectionRenderer" in s]
+
+			items = []
+			for section in itemSections:
+				items += section["itemSectionRenderer"]["contents"]
+
 			results = []
 			for item in items:
 				if "videoRenderer" in item:
