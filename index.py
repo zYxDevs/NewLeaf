@@ -69,8 +69,8 @@ class NewLeaf(object):
 				[ucid, part] = suffix
 			else:
 				return {
-					error: "Two components specified in URL, but neither component was recognised as a part keyword.",
-					identifier: "PART_KEYWORD_NOT_RECOGNISED"
+					"error": "Two components specified in URL, but neither component was recognised as a part keyword.",
+					"identifier": "PART_KEYWORD_NOT_RECOGNISED"
 				}
 
 		if part == "playlists":
