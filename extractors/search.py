@@ -2,7 +2,7 @@ import requests
 import traceback
 import yt_dlp
 from tools.converters import *
-from tools.extractors import extract_yt_initial_data
+from tools.extractors import extract_yt_initial_data, eu_consent_cookie
 from cachetools import TTLCache
 
 search_cache = TTLCache(maxsize=50, ttl=300)
@@ -17,7 +17,7 @@ ytdl = yt_dlp.YoutubeDL(ytdl_opts)
 
 def extract_search(q):
 	try:
-		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}, cookies={"CONSENT": "PENDING+999"}) as r:
+		with requests.get("https://www.youtube.com/results", params={"q": q, "hl": "en"}, cookies=eu_consent_cookie()) as r:
 			r.raise_for_status()
 			content = r.content.decode("utf8")
 			yt_initial_data = extract_yt_initial_data(content)

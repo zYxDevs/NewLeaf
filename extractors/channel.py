@@ -3,7 +3,7 @@ import dateutil.parser
 import requests
 import xml.etree.ElementTree as ET
 from tools.converters import *
-from tools.extractors import extract_yt_initial_data
+from tools.extractors import extract_yt_initial_data, eu_consent_cookie
 from threading import Lock
 from cachetools import TTLCache
 
@@ -18,7 +18,7 @@ def extract_channel(ucid):
 			return channel_cache[ucid]
 
 	channel_type = "channel" if len(ucid) == 24 and ucid[:2] == "UC" else "user"
-	with requests.get("https://www.youtube.com/{}/{}/videos?hl=en".format(channel_type, ucid), cookies={"CONSENT": "PENDING+999"}) as r:
+	with requests.get("https://www.youtube.com/{}/{}/videos?hl=en".format(channel_type, ucid), cookies=eu_consent_cookie()) as r:
 		r.raise_for_status()
 		yt_initial_data = extract_yt_initial_data(r.content.decode("utf8"))
 
