@@ -9,6 +9,7 @@ from extractors.manifest import extract_manifest
 from extractors.search import extract_search
 from extractors.suggestions import extract_search_suggestions
 from extractors.captions import extract_captions
+from extractors.comments import extract_comments
 import configuration
 
 @cherrypy.tools.register("before_finalize", priority=60)
@@ -26,7 +27,8 @@ class NewLeaf(object):
 				["channels", 1, 2],
 				["videos", 1, 1],
 				["search", 0, 1],
-				["captions", 1, 1]
+				["captions", 1, 1],
+				["comments", 1, 1]
 			]
 			for e in endpoints:
 				if vpath[2] == e[0] and len(vpath) >= e[1]+3 and len(vpath) <= e[2]+3:
@@ -113,6 +115,11 @@ class NewLeaf(object):
 				"error": "No captions matching that language or label",
 				"identifier": "NO_MATCHING_CAPTIONS"
 			}), "utf8")
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def comments(self, id, **kwargs):
+		return extract_comments(id)
 
 	@cherrypy.expose
 	def vi(self, id, file):
