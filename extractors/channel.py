@@ -74,20 +74,29 @@ def extract_channel(ucid):
 				v["gridVideoRenderer"] for v in tab_parts["gridRenderer"]["items"] if "gridVideoRenderer" in v
 			)
 			for v in videos:
-				live = True
-				length_text = "LIVE"
+				live = False
+				is_upcoming = False
+				length_text = "UNKNOWN"
 				length_seconds = -1
 				for o in v["thumbnailOverlays"]:
 					if "thumbnailOverlayTimeStatusRenderer" in o:
 						length_text = combine_runs(o["thumbnailOverlayTimeStatusRenderer"]["text"])
-						if o["thumbnailOverlayTimeStatusRenderer"]["style"] != "LIVE":
+						length_text_style = o["thumbnailOverlayTimeStatusRenderer"]["style"]
+						if length_text_style == "DEFAULT":
 							length_seconds = length_text_to_seconds(length_text)
-							live = False
+						elif length_text_style == "LIVE":
+							live = True
+						elif length_text_style == "UPCOMING":
+							is_upcoming = True
 				published = 0
 				published_text = "Live now"
+				premiere_timestamp = None
 				if "publishedTimeText" in v:
 					published_text = v["publishedTimeText"]["simpleText"]
 					published = past_text_to_time(published_text)
+				if "upcomingEventData" in v:
+					premiere_timestamp = v["upcomingEventData"]["startTime"]
+					published_text = time_to_past_text(int(premiere_timestamp))
 
 				view_count_text = combine_runs(v["viewCountText"]) if "viewCountText" in v else None
 				view_count_text_short = combine_runs(v["shortViewCountText"]) if "shortViewCountText" in v else None
@@ -112,7 +121,8 @@ def extract_channel(ucid):
 					"liveNow": live,
 					"paid": None,
 					"premium": None,
-					"isUpcoming": None
+					"isUpcoming": is_upcoming,
+					"premiereTimestamp": premiere_timestamp
 				})
 
 		channel = {

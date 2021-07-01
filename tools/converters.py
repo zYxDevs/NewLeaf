@@ -191,6 +191,13 @@ def past_text_to_time(text):
 def time_to_past_text(timestamp):
 	now = int(time.time())
 	diff = now - timestamp
+
+	# also allow for times in the future by using the same algorithm, then altering the output at the end
+	time_is_in_past = True
+	if diff < 0:
+		diff = -diff
+		time_is_in_past = False
+
 	units = [
 		["year", 365 * 24 * 60 * 60],
 		["month", 30 * 24 * 60 * 60],
@@ -205,7 +212,10 @@ def time_to_past_text(timestamp):
 		if diff > unit_value or index + 1 >= len(units):
 			number = diff // unit_value
 			plural_unit = unit_name if number == 1 else unit_name + "s"
-			return "{} {} ago".format(number, plural_unit)
+			if time_is_in_past:
+				return "{} {} ago".format(number, plural_unit)
+			else:
+				return "in {} {}".format(number, plural_unit)
 
 def get_language_label_from_url(url_string):
 	url = urlparse(url_string)
