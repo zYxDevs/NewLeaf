@@ -10,3 +10,12 @@ __pycache__
 # Personal
 /generic-updater
 /configuration.py
+
+# Various venv names, several options to allow the user to make stuff up
+.env
+.venv
+env
+venv
+env.bak
+venv.bak
+newleaf-venv
