@@ -16,7 +16,7 @@ directly to youtube-dl and reformatting the response to be compatible.
 
 ## Status
 
-[→ See the documentation.](https://git.sr.ht/~cadence/tube-docs/tree/main/item/docs/API.md)
+[→ See the documentation.](https://git.sr.ht/~cadence/tube-docs/tree/main/item/docs/newleaf/API.md)
 
 ## License
 
