@@ -11,10 +11,15 @@
 - [Todo tracker][todo] for listing problems and feature requests
 - [Chatroom on Matrix][matrix]
 
-A Python web project that mirrors the Invidious API, passing all calls
-directly to youtube-dl and reformatting the response to be compatible.
+NewLeaf is a YouTube data extractor, compatible with the Invidious API.
 
-## Status
+NewLeaf has no frontend. It is intended to be used in combination with
+a frontend like [CloudTube](https://git.sr.ht/~cadence/cloudtube).
+
+NewLeaf uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to assist with
+data extraction, but also does some extraction itself.
+
+## API status
 
 [→ See the documentation.](https://git.sr.ht/~cadence/tube-docs/tree/main/item/docs/newleaf/API.md)
 
