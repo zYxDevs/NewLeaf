@@ -209,7 +209,7 @@ def get_more_stuff_from_file(id, result):
 	# Figure out what the name of the saved file was
 	recommendations = []
 	created_files = files.get_created_files(id)
-	possible_files = [f for f in created_files if f[11:].startswith("_https_-_www.youtube.com")]
+	possible_files = [f for f in created_files if "_https_-_www.youtube.com_watch" in f]
 	try:
 		if len(possible_files) == 1:
 			filename = possible_files[0]
