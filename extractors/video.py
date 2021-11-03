@@ -219,7 +219,11 @@ def get_more_stuff_from_file(id, result):
 
 				yt_initial_data = extract_yt_initial_data(content)
 
-				main_video = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][0]["videoPrimaryInfoRenderer"]
+				# result = yt_initial_data
+				# return result
+
+				main_sections = yt_initial_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"]
+				main_video = next(s["videoPrimaryInfoRenderer"] for s in main_sections if "videoPrimaryInfoRenderer" in s)
 				views = main_video["viewCount"]["videoViewCountRenderer"]
 				result["second__viewCountText"] = get_view_count_text_or_recommended(views)
 				if "shortViewCount" in views:
@@ -233,9 +237,6 @@ def get_more_stuff_from_file(id, result):
 					result["allowRatings"] = False
 				recommendations = yt_initial_data["contents"]["twoColumnWatchNextResults"]["secondaryResults"]\
 					["secondaryResults"]["results"]
-
-				# result = yt_initial_data
-				# return result
 
 				def get_useful_recommendation_data(r):
 					if "compactVideoRenderer" in r:
