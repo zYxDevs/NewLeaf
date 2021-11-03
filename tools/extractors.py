@@ -1,6 +1,7 @@
 import re
 import json
 import random
+from functools import reduce
 
 r_yt_initial_data = re.compile(r"""(?:^\s*window\["ytInitialData"\]|var ytInitialData) = (\{.+?\});(?:\s*$|</script>)""", re.S + re.M)
 r_yt_initial_player_response = re.compile(r"""(?:^\s*window\["ytInitialPlayerResponse"\]|var ytInitialPlayerResponse) = (\{.+?\});(?:\s*$|</script>|var )""", re.S + re.M)
@@ -30,3 +31,12 @@ def extract_yt_cfg(content):
 
 def eu_consent_cookie():
 	return {"CONSENT": "YES+cb.20210509-17-p0.en+F+{}".format(random.randint(100, 999))}
+
+def is_in(o, key):
+	if isinstance(o, list):
+		return type(key) == int and key >= 0 and key < len(o)
+	else:
+		return key in o
+
+def deep_get(o, properties):
+	return reduce(lambda a, b: a and is_in(a, b) and a[b] or None, [o, *properties])

@@ -7,7 +7,7 @@ import traceback
 import yt_dlp
 import urllib.error
 from tools.converters import *
-from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response
+from tools.extractors import extract_yt_initial_data, extract_yt_initial_player_response, deep_get
 import tools.files as files
 from math import floor
 from urllib.parse import parse_qs, urlparse, urlencode
@@ -316,6 +316,12 @@ def get_more_stuff_from_file(id, result):
 							"url": subtitle_api_url,
 							"second__remoteUrl": url
 						})
+
+				# fact check notices! aka "clarifications".
+				# for now, we just return the data as-is for the renderer to deal with (or not).
+				def get_clarification(section):
+					return deep_get(section, ["itemSectionRenderer", "contents", 0, "clarificationRenderer"])
+				result["second__clarification"] = next((get_clarification(s) for s in main_sections if get_clarification(s)), None)
 
 	except Exception:
 		print("messed up extracting recommendations.")
