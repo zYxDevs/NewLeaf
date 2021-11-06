@@ -123,17 +123,17 @@ class NewLeaf(object):
 
 	@cherrypy.expose
 	def vi(self, id, file):
-		with requests.get("https://i.ytimg.com/vi/{}/{}".format(id, file)) as r:
+		with requests.get("https://i.ytimg.com/vi/{}/{}".format(id, file), stream=True) as r:
 			r.raise_for_status()
 			cherrypy.response.headers["content-type"] = r.headers["content-type"]
-			return r # no idea if this is a good way to do it, but it definitely works! :D
+			return next(r.iter_content(chunk_size=None))
 
 	@cherrypy.expose
 	def ggpht(self, *path):
-		with requests.get("https://yt3.ggpht.com/{}".format("/".join(path))) as r:
+		with requests.get("https://yt3.ggpht.com/{}".format("/".join(path)), stream=True) as r:
 			r.raise_for_status()
 			cherrypy.response.headers["content-type"] = r.headers["content-type"]
-			return r
+			return next(r.iter_content(chunk_size=None))
 
 bind_port = getattr(configuration, "bind_port", 3000)
 bind_host = getattr(configuration, "bind_host", "0.0.0.0")
