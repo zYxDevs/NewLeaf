@@ -35,7 +35,10 @@ def extract_channel(ucid):
 				"identifier": "ACCOUNT_TERMINATED"
 			}
 		else:
-			print("Seen alert text '{}'".format(alert_text))
+			return {
+				"error": alert_text,
+				"identifier": "UNKNOWN"
+			}
 
 	header = yt_initial_data["header"]["c4TabbedHeaderRenderer"] if "c4TabbedHeaderRenderer" in yt_initial_data["header"] else {}
 	channel_metadata = yt_initial_data["metadata"]["channelMetadataRenderer"]
