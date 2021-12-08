@@ -106,7 +106,13 @@ def extract_video(id):
 		}
 
 		for format in info["formats"]:
-			# Adaptive formats have either audio or video, format streams have both
+			# Storyboard images are now included in formats, we don't want them.
+			# Storyboards have neither audio nor video, so detect them that way.
+			# They could also be detected with ("storyboard" in format_note), or with (protocol == "mhtml").
+			if format["acodec"] == "none" and format["vcodec"] == "none":
+				continue
+
+			# Adaptive formats have either audio or video, format streams have both, storyboard images have neither.
 			is_adaptive = format["acodec"] == "none" or format["vcodec"] == "none"
 			sense = "video" if format["vcodec"] != "none" else "audio"
 			mime = sense + "/" + format["ext"]
