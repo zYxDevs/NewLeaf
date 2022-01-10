@@ -170,9 +170,6 @@ def extract_channel_latest(ucid):
 	with requests.get("https://www.youtube.com/feeds/videos.xml?channel_id={}".format(ucid)) as r:
 		if r.status_code == 404:
 			cherrypy.response.status = 404
-			# write out page data for debugging
-			with open("channel_not_found_{}.xml".format(ucid), "wb") as f:
-				f.write(r.content)
 			return {
 				"error": "This channel does not exist.",
 				"identifier": "NOT_FOUND"
