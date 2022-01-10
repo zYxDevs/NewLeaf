@@ -29,6 +29,11 @@ def extract_channel(ucid):
 					"error": alert_text,
 					"identifier": "NOT_FOUND"
 				}
+			elif alert_text.startswith("This account has been terminated"):
+				return {
+					"error": alert_text,
+					"identifier": "ACCOUNT_TERMINATED"
+				}
 			else:
 				print("Seen alert text '{}'".format(alert_text))
 
@@ -165,6 +170,9 @@ def extract_channel_latest(ucid):
 	with requests.get("https://www.youtube.com/feeds/videos.xml?channel_id={}".format(ucid)) as r:
 		if r.status_code == 404:
 			cherrypy.response.status = 404
+			# write out page data for debugging
+			with open("channel_not_found_{}.xml".format(ucid), "wb") as f:
+				f.write(r.content)
 			return {
 				"error": "This channel does not exist.",
 				"identifier": "NOT_FOUND"
