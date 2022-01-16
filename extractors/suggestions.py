@@ -20,12 +20,12 @@ def extract_search_suggestions(q):
 		"xhr": "t",
 		# "xssi": "t"
 	}
-	with requests.get("https://clients1.google.com/complete/search", params=params) as r:
-		r.raise_for_status()
-		response = r.json()
-		result = {
-			"query": q,
-			"suggestions": [s[0] for s in response[1]]
-		}
-		suggestions_cache[q] = result
-		return result
+	r = requests.get("https://clients1.google.com/complete/search", params=params)
+	r.raise_for_status()
+	response = r.json()
+	result = {
+		"query": q,
+		"suggestions": [s[0] for s in response[1]]
+	}
+	suggestions_cache[q] = result
+	return result

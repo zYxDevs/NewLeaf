@@ -11,9 +11,9 @@ def extract_manifest(id):
 		return video
 
 	if video["second__providedDashUrl"]:
-		with requests.get(video["second__providedDashUrl"]) as r:
-			r.raise_for_status()
-			return r
+		r = requests.get(video["second__providedDashUrl"])
+		r.raise_for_status()
+		return r
 
 	adaptation_sets_dict = {}
 	for f in video["adaptiveFormats"]:
