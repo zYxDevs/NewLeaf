@@ -13,9 +13,11 @@ channel_latest_cache = TTLCache(maxsize=500, ttl=300)
 channel_latest_cache_lock = Lock()
 
 def extract_channel(ucid, second__path="user"):
+	cache_key = (ucid, second__path)
+
 	with channel_cache_lock:
-		if ucid in channel_cache:
-			return channel_cache[ucid]
+		if cache_key in channel_cache:
+			return channel_cache[cache_key]
 
 	channel_type = "channel" if len(ucid) == 24 and ucid[:2] == "UC" else second__path
 	r = requests.get("https://www.youtube.com/{}/{}/videos?hl=en".format(channel_type, ucid), cookies=eu_consent_cookie())
@@ -154,12 +156,12 @@ def extract_channel(ucid, second__path="user"):
 	}
 
 	with channel_cache_lock:
-		channel_cache[ucid] = channel
+		channel_cache[cache_key] = channel
 
 	return channel
 
-def extract_channel_videos(ucid):
-	channel = extract_channel(ucid)
+def extract_channel_videos(ucid, second__path="channel"):
+	channel = extract_channel(ucid, second__path)
 	if "error" in channel:
 		return channel
 	else:

@@ -58,7 +58,7 @@ class NewLeaf(object):
 
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
-	def channels(self, *suffix, second__path="user", **kwargs):
+	def channels(self, *suffix, second__path="channel", **kwargs):
 		ucid = ""
 		part = ""
 		possible_parts = ("videos", "latest", "playlists")
@@ -74,7 +74,7 @@ class NewLeaf(object):
 					"error": "Two components specified in URL, but neither component was recognised as a part keyword.",
 					"identifier": "PART_KEYWORD_NOT_RECOGNISED"
 				}
-		possible_paths = ("channel", "c", "user")
+		possible_paths = ("channel",) if part == "latest" else ("channel", "c", "user")
 		if second__path not in possible_paths:
 			return {
 				"error": "second__path parameter must be one of: " + str(possible_paths),
@@ -84,7 +84,7 @@ class NewLeaf(object):
 		if part == "playlists":
 			return []
 		elif part == "latest":
-			return extract_channel_latest(ucid, second__path)
+			return extract_channel_latest(ucid)
 		elif part == "videos":
 			return extract_channel_videos(ucid, second__path)
 		else: # part == "", so extract whole channel
