@@ -72,16 +72,16 @@ def extract_channel(ucid, second__path="user"):
 	latest_videos = []
 	tabs = yt_initial_data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
 	try:
-		videos_tab = next(tab["tabRenderer"] for tab in tabs if tab["tabRenderer"]["title"] == "Videos")
-		tab_parts = videos_tab["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]
+		videos_tab = next(tab["tabRenderer"] for tab in tabs if tab.get("tabRenderer", {}).get("title") == "Videos")
+		tab_parts = videos_tab["content"]
 	except StopIteration:
 		tab_parts = {}
 
 	# check that the channel actually has videos - this may be replaced
 	# with messageRenderer.text.simpleText == "This channel has no videos."
-	if "gridRenderer" in tab_parts:
+	if "richGridRenderer" in tab_parts:
 		videos = (
-			v["gridVideoRenderer"] for v in tab_parts["gridRenderer"]["items"] if "gridVideoRenderer" in v
+			v["richItemRenderer"]["content"]["videoRenderer"] for v in tab_parts["richGridRenderer"]["contents"] if "richItemRenderer" in v
 		)
 		for v in videos:
 			live = False
