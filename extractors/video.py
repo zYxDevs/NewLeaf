@@ -115,6 +115,10 @@ def extract_video(id):
 			if format["acodec"] == "none" and format["vcodec"] == "none":
 				continue
 
+			# m3u8 playlists cannot be played.
+			if "m3u8" in format["protocol"]:
+				continue
+
 			# Adaptive formats have either audio or video, format streams have both, storyboard images have neither.
 			is_adaptive = format["acodec"] == "none" or format["vcodec"] == "none"
 			sense = "video" if format["vcodec"] != "none" else "audio"
