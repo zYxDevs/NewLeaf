@@ -105,6 +105,9 @@ def extract_video(id):
 			"recommendedVideos": []
 		}
 
+		# result = info["formats"]
+		# return result
+
 		for format in info["formats"]:
 			# Storyboard images are now included in formats, we don't want them.
 			# Storyboards have neither audio nor video, so detect them that way.
@@ -125,7 +128,7 @@ def extract_video(id):
 
 			if is_adaptive:
 				url = ""
-				if format["protocol"] == "http_dash_segments":
+				if "fragment_base_url" in format:
 					# this is http dash, which is annoying and doesn't work in <video>.
 					# we have a fragment_base_url, which seems to be playable for all audio, but only with certain video itags??? very confused
 					if format["acodec"] == "none" and format["format_id"] not in ["134", "136"]:
