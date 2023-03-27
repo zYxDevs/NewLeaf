@@ -189,6 +189,7 @@ def extract_channel_latest(ucid):
 	missing_published = False
 	for entry in feed.findall("{http://www.w3.org/2005/Atom}entry"):
 		id = entry.find("{http://www.youtube.com/xml/schemas/2015}videoId").text
+		channel_id = channel_id or entry.find("{http://www.youtube.com/xml/schemas/2015}channelId").text
 		media_group = entry.find("{http://search.yahoo.com/mrss/}group")
 		description = media_group.find("{http://search.yahoo.com/mrss/}description").text or ""
 		media_community = media_group.find("{http://search.yahoo.com/mrss/}community")
