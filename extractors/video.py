@@ -109,14 +109,14 @@ def extract_video(id):
 		# return result
 
 		for format in info["formats"]:
+			# m3u8 playlists cannot be played.
+			if "m3u8" in format["protocol"]:
+				continue
+
 			# Storyboard images are now included in formats, we don't want them.
 			# Storyboards have neither audio nor video, so detect them that way.
 			# They could also be detected with ("storyboard" in format_note), or with (protocol == "mhtml").
 			if format["acodec"] == "none" and format["vcodec"] == "none":
-				continue
-
-			# m3u8 playlists cannot be played.
-			if "m3u8" in format["protocol"]:
 				continue
 
 			# Adaptive formats have either audio or video, format streams have both, storyboard images have neither.
