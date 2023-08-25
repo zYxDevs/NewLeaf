@@ -1,6 +1,5 @@
 import re
 import json
-import random
 from functools import reduce
 
 r_yt_initial_data = re.compile(r"""(?:^\s*window\["ytInitialData"\]|var ytInitialData) = (\{.+?\});(?:\s*$|</script>)""", re.S + re.M)
@@ -30,7 +29,7 @@ def extract_yt_cfg(content):
 	raise Exception("Could not match ytcfg in content")
 
 def eu_consent_cookie():
-	return {"CONSENT": "YES+cb.20210509-17-p0.en+F+{}".format(random.randint(100, 999))}
+	return {"SOCS": "CAI"}
 
 def is_in(o, key):
 	if isinstance(o, list):
