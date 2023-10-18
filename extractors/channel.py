@@ -189,7 +189,9 @@ def extract_channel_latest(ucid):
 	missing_published = False
 	for entry in feed.findall("{http://www.w3.org/2005/Atom}entry"):
 		id = entry.find("{http://www.youtube.com/xml/schemas/2015}videoId").text
-		channel_id = channel_id or entry.find("{http://www.youtube.com/xml/schemas/2015}channelId").text
+		video_channel_id = entry.find("{http://www.youtube.com/xml/schemas/2015}channelId").text or channel_id
+		if len(video_channel_id) == 22 and not video.startswith("UC"):
+			video_channel_id = "UC" + video_channel_id
 		media_group = entry.find("{http://search.yahoo.com/mrss/}group")
 		description = media_group.find("{http://search.yahoo.com/mrss/}description").text or ""
 		media_community = media_group.find("{http://search.yahoo.com/mrss/}community")
@@ -201,7 +203,7 @@ def extract_channel_latest(ucid):
 				"title": entry.find("{http://www.w3.org/2005/Atom}title").text,
 				"videoId": id,
 				"author": author,
-				"authorId": channel_id,
+				"authorId": video_channel_id,
 				"authorUrl": author_url,
 				"videoThumbnails": generate_video_thumbnails(id),
 				"description": description,

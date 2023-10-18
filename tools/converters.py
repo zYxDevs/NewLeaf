@@ -107,7 +107,7 @@ def generate_video_thumbnails(id):
 	types = [
 		# quality, url part, width, height
 		["maxres", "maxresdefault", 1280, 720],
-		["maxresdefault", "maxresdefault", 180, 720],
+		["maxresdefault", "maxresdefault", 1280, 720],
 		["sddefault", "sddefault", 640, 480],
 		["high", "hqdefault", 480, 360],
 		["medium", "mqdefault", 320, 180],
